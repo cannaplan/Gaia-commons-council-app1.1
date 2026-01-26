@@ -3,3 +3,21 @@ CORE MODELING CAPABILITIES: The platform integrates IPCC-based climate projectio
 SOFTWARE ARCHITECTURE: Gaia operates through multiple interfaces including a complete command-line interface (CLI) with commands for scenario execution, comparison, visualization, and report generation; a production-grade web service with REST API endpoints, real-time WebSocket connections, and interactive dashboard; Monte Carlo uncertainty analysis for parameter sensitivity and risk assessment; policy optimization algorithms that find optimal parameters while preserving choice constraints; comprehensive caching and monitoring systems for enterprise deployment; automated scenario comparison tools with statistical analysis; and professional report generation for legislators, academics, activists, and corporate audiences. The system includes mathematical validation throughout, comprehensive error handling, and configuration management allowing users to customize all behavioral parameters while maintaining baseline data anchoring to EPA, IEA, World Bank, and IPCC sources.
 PRACTICAL APPLICATIONS: Policymakers use Gaia for legislative briefings and policy scenario analysis, testing different carbon tax structures, renewable energy policies, and worker transition programs. Activists employ the framework for campaign strategy development, political coalition building, and demonstrating implementation feasibility to build public support. Researchers utilize Gaia for academic collaboration, policy pathway studies, and methodology development with complete source documentation. Organizations like Minnesota Cannabis Society use the platform for real-world pilot program planning, funding strategy development, and scaling pathway analysis. Corporate partners engage Gaia for strategic planning, partnership evaluation, and sustainability program design.
 REVOLUTIONARY DIFFERENTIATORS: Unlike every other climate/policy framework, Gaia preserves worker and farmer choice throughout transformation (preventing political backlash), models hemp as the sacred plant enabling complete industrial revolution (replacing cotton, timber, petroleum plastics), includes proven funding mechanisms (corporate levy + cannabis enterprise) rather than just policy recommendations, integrates grassroots organizing wisdom with technical modeling, was created by actual organizers rather than academics, provides real implementation pathways from local programs to planetary change, models political coalition building as core functionality, and demonstrates how concrete benefits (feeding students, creating jobs, supporting workers) build the political power necessary to implement systemic transformation rather than just advocate for it.
+Copyright (c) 2026 Gaia Commons Council
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to use, copy, modify, and redistribute the Software, subject to the following conditions:
+
+You MAY:
+
+Use this software for personal, educational, or non-profit purposes
+Copy, modify, and share this software freely
+Create derivative works based on this software
+You MAY NOT:
+
+Sell, license, or commercially exploit this software or its derivatives
+Use this software or its name for financial gain, fraud, or deception
+Misrepresent ownership or origin of this software
+Use this software to harm, coerce, threaten, or exploit others
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. THE AUTHORS SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES, OR LIABILITY ARISING FROM USE OF THE SOFTWARE.
