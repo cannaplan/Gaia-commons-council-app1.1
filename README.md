@@ -1,23 +1,63 @@
-Gaia Commons Council is the world's first complete planetary transformation framework that bridges the critical gap between climate modeling and real-world implementation. Created by Minnesota Cannabis Society, Gaia uniquely integrates climate science, regenerative agriculture (including hemp industrial revolution), universal food security networks, and political coalition building into a single comprehensive system designed for actual deployment rather than theoretical analysis.
-CORE MODELING CAPABILITIES: The platform integrates IPCC-based climate projections with carbon budget constraints, energy transition modeling featuring tiered carbon pricing ($25-$200/ton by emitter size with exponential scaling), comprehensive economic impact analysis including job creation across sectors, regenerative agriculture transformation modeling covering 180 million acres of farmland conversion, hemp industrial revolution calculations showing replacement of cotton/timber/petroleum plastics, nationwide food security network analysis scaling school greenhouse systems to all 50 states, worker transition support modeling with choice preservation mechanisms, and political coalition strength analysis quantifying electoral impact and implementation feasibility.
-SOFTWARE ARCHITECTURE: Gaia operates through multiple interfaces including a complete command-line interface (CLI) with commands for scenario execution, comparison, visualization, and report generation; a production-grade web service with REST API endpoints, real-time WebSocket connections, and interactive dashboard; Monte Carlo uncertainty analysis for parameter sensitivity and risk assessment; policy optimization algorithms that find optimal parameters while preserving choice constraints; comprehensive caching and monitoring systems for enterprise deployment; automated scenario comparison tools with statistical analysis; and professional report generation for legislators, academics, activists, and corporate audiences. The system includes mathematical validation throughout, comprehensive error handling, and configuration management allowing users to customize all behavioral parameters while maintaining baseline data anchoring to EPA, IEA, World Bank, and IPCC sources.
-PRACTICAL APPLICATIONS: Policymakers use Gaia for legislative briefings and policy scenario analysis, testing different carbon tax structures, renewable energy policies, and worker transition programs. Activists employ the framework for campaign strategy development, political coalition building, and demonstrating implementation feasibility to build public support. Researchers utilize Gaia for academic collaboration, policy pathway studies, and methodology development with complete source documentation. Organizations like Minnesota Cannabis Society use the platform for real-world pilot program planning, funding strategy development, and scaling pathway analysis. Corporate partners engage Gaia for strategic planning, partnership evaluation, and sustainability program design.
-REVOLUTIONARY DIFFERENTIATORS: Unlike every other climate/policy framework, Gaia preserves worker and farmer choice throughout transformation (preventing political backlash), models hemp as the sacred plant enabling complete industrial revolution (replacing cotton, timber, petroleum plastics), includes proven funding mechanisms (corporate levy + cannabis enterprise) rather than just policy recommendations, integrates grassroots organizing wisdom with technical modeling, was created by actual organizers rather than academics, provides real implementation pathways from local programs to planetary change, models political coalition building as core functionality, and demonstrates how concrete benefits (feeding students, creating jobs, supporting workers) build the political power necessary to implement systemic transformation rather than just advocate for it.
-Copyright (c) 2026 Gaia Commons Council
+# Gaia Commons Council
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to use, copy, modify, and redistribute the Software, subject to the following conditions:
+Gaia Commons Council is the world's first complete planetary transformation framework that bridges the critical gap between climate modeling and real-world implementation. Created by Minnesota Cannabi... (project description truncated for brevity in this header)
 
-You MAY:
+Status: Work in progress — early prototype. Contributions and feedback welcome.
 
-Use this software for personal, educational, or non-profit purposes
-Copy, modify, and share this software freely
-Create derivative works based on this software
-You MAY NOT:
+This repository contains a Python-based CLI and a small API placeholder to run scenarios, compare results, visualize outputs, and generate reports.
 
-Sell, license, or commercially exploit this software or its derivatives
-Use this software or its name for financial gain, fraud, or deception
-Misrepresent ownership or origin of this software
-Use this software to harm, coerce, threaten, or exploit others
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+Quickstart (beginner-friendly)
+1. Clone the repo
+   git clone https://github.com/cannaplan/Gaia-commons-council-app1.1.git
+   cd Gaia-commons-council-app1.1
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. THE AUTHORS SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES, OR LIABILITY ARISING FROM USE OF THE SOFTWARE.
+2. Create a Python virtual environment and activate it
+   python3 -m venv .venv
+   # macOS / Linux
+   source .venv/bin/activate
+   # Windows (PowerShell)
+   .venv\Scripts\Activate.ps1
+
+3. Install dependencies
+   pip install -r requirements.txt
+
+4. Run the API (development)
+   # starts a small local API on port 8000
+   uvicorn app.main:app --reload --port 8000
+
+   Visit: http://127.0.0.1:8000/health
+
+5. Run the CLI (example)
+   # run the CLI's placeholder command
+   python -m app.cli run-scenario --name "demo"
+
+What’s included
+- app/main.py — minimal FastAPI app with a health endpoint.
+- app/cli.py — CLI entrypoint (click) with a run-scenario stub.
+- requirements.txt — minimal package list to run the app and CLI.
+- .env.example — example environment variables.
+- Dockerfile — simple image to run the app.
+- LICENSE — the permission & disclaimer text you provided.
+- .github/workflows/ci.yml — tiny CI that installs dependencies and verifies the app imports.
+
+Minimal Usage Examples
+
+- Health check (curl)
+  curl http://127.0.0.1:8000/health
+  Response:
+  {"status": "ok"}
+
+- CLI (placeholder)
+  python -m app.cli run-scenario --name "my-test"
+
+Environment
+- See .env.example for common env vars. Do not commit real secrets.
+
+License
+- This project uses the license text included in the LICENSE file (permission + restrictions + disclaimer).
+
+Next steps (recommended, easy)
+1. Fill in the CLI command implementation in app/cli.py.
+2. Add real dependencies that your project needs (replace or extend requirements.txt).
+3. Add tests in tests/ and update CI to run them.
+4. Add an OpenAPI (openapi.yaml) or expand FastAPI endpoint docs when you add more endpoints.
