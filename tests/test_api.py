@@ -4,17 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app import scenario
 
 client = TestClient(app)
-
-
-@pytest.fixture(autouse=True)
-def clear_scenario_store():
-    """Clear the scenario store before each test to ensure test isolation."""
-    scenario.clear_scenario_store()
-    yield
-    scenario.clear_scenario_store()
 
 
 def test_post_and_get_scenario():

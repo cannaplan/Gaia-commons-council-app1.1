@@ -126,11 +126,28 @@ Development
 - Use `pytest -v` for verbose test output
 - Use `pytest --cov=app` to see code coverage
 
+### Database
+- The application now uses SQLite for scenario persistence (file-based by default)
+- Database location: `./data/gaia.db` (created automatically on first run)
+- For testing, an in-memory SQLite database is used automatically via `DATABASE_URL` environment variable
+- To use a different database, set the `DATABASE_URL` environment variable:
+  ```bash
+  export DATABASE_URL="sqlite:///./custom-path.db"
+  ```
+
+### Migration Notes
+- **IMPORTANT**: This version introduces SQLite persistence for scenarios. 
+- On first run, the database schema will be created automatically in `./data/gaia.db`
+- For production deployments, ensure the `./data` directory is writable and backed up regularly
+- TODO: Implement proper database migrations using Alembic or similar tool for future schema changes
+- The database is initialized on application startup; no manual migration is required for the initial deployment
+
 License
 - This project uses the license text included in the LICENSE file (permission + restrictions + disclaimer).
 
 Next Steps
-1. Add database persistence for scenarios (planned for PR #3)
+1. ✅ Add database persistence for scenarios (completed in this PR)
 2. Implement background task queue for async execution
 3. Add more scenario types and configuration options
 4. Expand API with scenario management endpoints
+5. Add database migration support using Alembic
