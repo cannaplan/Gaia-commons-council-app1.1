@@ -11,10 +11,10 @@ client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def clear_scenario_store():
-    """Clear the in-memory scenario store before each test to ensure test isolation."""
-    scenario._SCENARIO_STORE.clear()
+    """Clear the scenario store before each test to ensure test isolation."""
+    scenario.clear_scenario_store()
     yield
-    scenario._SCENARIO_STORE.clear()
+    scenario.clear_scenario_store()
 
 
 def test_post_and_get_scenario():
