@@ -64,6 +64,36 @@ API:
   ```
   Response: `{"status": "ok"}`
 
+- Create and run a scenario (POST /scenarios)
+  ```bash
+  curl -X POST http://127.0.0.1:8000/scenarios \
+    -H "Content-Type: application/json" \
+    -d '{"name": "my-scenario", "config": {"param1": "value1"}}'
+  ```
+  Response (201 Created):
+  ```json
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "my-scenario",
+    "status": "finished",
+    "started_at": "2026-01-29T05:00:00Z",
+    "finished_at": "2026-01-29T05:00:01Z",
+    "result": {
+      "summary": "demo result",
+      "input_config": {"param1": "value1"}
+    }
+  }
+  ```
+
+- Get a scenario by ID (GET /scenarios/{id})
+  ```bash
+  curl http://127.0.0.1:8000/scenarios/550e8400-e29b-41d4-a716-446655440000
+  ```
+  Response (200 OK): Same as POST response
+
+- OpenAPI Documentation (Swagger UI)
+  Visit http://127.0.0.1:8000/docs in your browser to explore the interactive API documentation
+
 CLI:
 - Run a scenario
   ```bash
