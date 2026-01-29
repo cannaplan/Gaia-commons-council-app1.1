@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 class ScenarioCreate(BaseModel):
     """Request model for creating a new scenario."""
     
-    name: str = Field(..., description="Name of the scenario to run")
+    name: str = Field(..., min_length=1, description="Name of the scenario to run")
     config: Optional[dict] = Field(None, description="Optional configuration dictionary")
 
 
