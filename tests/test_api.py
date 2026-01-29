@@ -1,10 +1,15 @@
 """Tests for the API endpoints."""
 
+import os
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app import scenario
+from app.db import init_db
+
+# Set DATABASE_URL to use in-memory SQLite for tests
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
 client = TestClient(app)
 
@@ -12,6 +17,8 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def clear_scenario_store():
     """Clear the scenario store before each test to ensure test isolation."""
+    # Initialize DB schema before each test
+    init_db()
     scenario.clear_scenario_store()
     yield
     scenario.clear_scenario_store()
