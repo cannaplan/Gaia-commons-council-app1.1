@@ -1,9 +1,6 @@
 """API router for scenario management endpoints."""
 
-from typing import Optional
-
 from fastapi import APIRouter, HTTPException, Response, status
-from fastapi.responses import JSONResponse
 
 from app.scenario import create_and_run_scenario, get_scenario
 from app.schemas import ScenarioCreate, ScenarioResponse
