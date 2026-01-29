@@ -2,8 +2,12 @@
 
 import time
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Dict, Optional
 from uuid import uuid4
+
+# TODO: Replace with SQLite database in PR #3
+# In-memory registry for storing scenario records
+_SCENARIO_STORE: Dict[str, dict] = {}
 
 
 def run_scenario(name: str, config: Optional[dict] = None) -> dict:
@@ -49,6 +53,48 @@ def run_scenario(name: str, config: Optional[dict] = None) -> dict:
         "started_at": started_at.isoformat(),
         "finished_at": finished_at.isoformat()
     }
+
+
+def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
+    """
+    Create and execute a scenario, storing it in the in-memory registry.
+    
+    This function runs the scenario synchronously and stores the result
+    in the in-memory _SCENARIO_STORE. In PR #3, this will be replaced
+    with SQLite persistence.
+    
+    Args:
+        name: The name of the scenario to run
+        config: Optional configuration dictionary for the scenario
+        
+    Returns:
+        A dictionary containing the scenario record with id, name, status,
+        result, started_at, and finished_at fields
+    """
+    # Run the scenario (synchronous execution)
+    record = run_scenario(name=name, config=config)
+    
+    # Store in the in-memory registry
+    # TODO: Replace with SQLite database in PR #3
+    _SCENARIO_STORE[record["id"]] = record
+    
+    return record
+
+
+def get_scenario(scenario_id: str) -> Optional[dict]:
+    """
+    Retrieve a scenario record from the in-memory registry.
+    
+    In PR #3, this will be replaced with SQLite database lookup.
+    
+    Args:
+        scenario_id: The unique identifier (UUID) of the scenario
+        
+    Returns:
+        The scenario record dictionary if found, None otherwise
+    """
+    # TODO: Replace with SQLite database query in PR #3
+    return _SCENARIO_STORE.get(scenario_id)
 
 
 def create_scenario_record(**kwargs) -> dict:
