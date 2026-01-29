@@ -20,6 +20,8 @@ Quickstart (beginner-friendly)
 
 3. Install dependencies
    pip install -r requirements.txt
+   # For development (includes test dependencies)
+   pip install -r requirements-dev.txt
 
 4. Run the API (development)
    # starts a small local API on port 8000
@@ -27,9 +29,22 @@ Quickstart (beginner-friendly)
 
    Visit: http://127.0.0.1:8000/health
 
-5. Run the CLI (example)
-   # run the CLI's placeholder command
+5. Run the CLI
+   # Basic usage - run a scenario
    python -m app.cli run-scenario --name "demo"
+   
+   # With configuration file (JSON or YAML)
+   python -m app.cli run-scenario --name "my-scenario" --config config.json
+   
+   # Save output to file
+   python -m app.cli run-scenario --name "demo" --output result.json
+
+6. Run tests
+   # Run all tests
+   pytest
+   
+   # Run with coverage
+   pytest --cov=app
 
 What’s included
 - app/main.py — minimal FastAPI app with a health endpoint.
@@ -40,24 +55,52 @@ What’s included
 - LICENSE — the permission & disclaimer text you provided.
 - .github/workflows/ci.yml — tiny CI that installs dependencies and verifies the app imports.
 
-Minimal Usage Examples
+Usage Examples
 
+API:
 - Health check (curl)
+  ```bash
   curl http://127.0.0.1:8000/health
-  Response:
-  {"status": "ok"}
+  ```
+  Response: `{"status": "ok"}`
 
-- CLI (placeholder)
-  python -m app.cli run-scenario --name "my-test"
+CLI:
+- Run a scenario
+  ```bash
+  python -m app.cli run-scenario --name "demo"
+  ```
+  Output (JSON):
+  ```json
+  {
+    "id": "uuid-here",
+    "name": "demo",
+    "status": "finished",
+    "result": {
+      "summary": "demo result",
+      "input_config": {}
+    },
+    "started_at": "2026-01-29T00:00:00",
+    "finished_at": "2026-01-29T00:00:01"
+  }
+  ```
 
-Environment
-- See .env.example for common env vars. Do not commit real secrets.
+Tests:
+- Run tests
+  ```bash
+  pytest
+  ```
+
+Development
+- Tests are located in `tests/` directory
+- CI automatically runs tests on push and pull requests
+- Use `pytest -v` for verbose test output
+- Use `pytest --cov=app` to see code coverage
 
 License
 - This project uses the license text included in the LICENSE file (permission + restrictions + disclaimer).
 
-Next steps (recommended, easy)
-1. Fill in the CLI command implementation in app/cli.py.
-2. Add real dependencies that your project needs (replace or extend requirements.txt).
-3. Add tests in tests/ and update CI to run them.
-4. Add an OpenAPI (openapi.yaml) or expand FastAPI endpoint docs when you add more endpoints.
+Next Steps
+1. Add database persistence for scenarios (planned for PR #3)
+2. Implement background task queue for async execution
+3. Add more scenario types and configuration options
+4. Expand API with scenario management endpoints
