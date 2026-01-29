@@ -3,13 +3,13 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ScenarioCreate(BaseModel):
     """Request schema for creating a new scenario."""
     
-    name: str
+    name: str = Field(..., min_length=1)
     config: Optional[dict] = None
 
 

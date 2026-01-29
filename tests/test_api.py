@@ -1,10 +1,20 @@
 """Tests for the API endpoints."""
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.scenario import _SCENARIO_STORE
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def clear_scenario_store():
+    """Clear the in-memory scenario store before each test."""
+    _SCENARIO_STORE.clear()
+    yield
+    _SCENARIO_STORE.clear()
 
 
 def test_post_and_get_scenario():
@@ -34,8 +44,9 @@ def test_post_and_get_scenario():
     assert data["result"]["summary"] == "demo result"
     assert data["result"]["input_config"] == scenario_data["config"]
     
-    # Extract the scenario ID
+    # Extract the scenario ID and verify Location header
     scenario_id = data["id"]
+    assert response.headers["Location"] == f"/scenarios/{scenario_id}"
     
     # Retrieve the scenario via GET
     get_response = client.get(f"/scenarios/{scenario_id}")
@@ -62,3 +73,20 @@ def test_get_not_found():
     data = response.json()
     assert "detail" in data
     assert non_existent_id in data["detail"]
+
+
+def test_post_scenario_empty_name():
+    """Test that POST with empty name returns 422 validation error."""
+    scenario_data = {
+        "name": "",
+        "config": {"param1": "value1"}
+    }
+    
+    response = client.post("/scenarios", json=scenario_data)
+    
+    # Assert 422 Unprocessable Entity
+    assert response.status_code == 422
+    
+    # Check validation error details
+    data = response.json()
+    assert "detail" in data
