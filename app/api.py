@@ -9,12 +9,15 @@ router = APIRouter()
 
 
 @router.post("/scenarios", response_model=ScenarioResponse, status_code=status.HTTP_201_CREATED)
-async def create_scenario(scenario: ScenarioCreate, response: Response):
+def create_scenario(scenario: ScenarioCreate, response: Response):
     """
     Create and run a new scenario.
     
     Accepts a JSON body with scenario name and optional configuration.
     Returns the scenario record with execution details and a Location header.
+    
+    Note: This is a synchronous endpoint so FastAPI runs it in a threadpool,
+    preventing the blocking time.sleep in run_scenario from blocking the event loop.
     """
     # Create and run the scenario
     record = create_and_run_scenario(name=scenario.name, config=scenario.config)
@@ -26,7 +29,7 @@ async def create_scenario(scenario: ScenarioCreate, response: Response):
 
 
 @router.get("/scenarios/{scenario_id}", response_model=ScenarioResponse)
-async def get_scenario_by_id(scenario_id: str):
+def get_scenario_by_id(scenario_id: str):
     """
     Retrieve a scenario by its unique identifier.
     

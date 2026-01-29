@@ -90,3 +90,26 @@ def test_post_scenario_empty_name():
     # Check validation error details
     data = response.json()
     assert "detail" in data
+
+
+def test_post_scenario_without_config():
+    """Test creating a scenario without the optional config field."""
+    # POST without config key
+    scenario_data = {
+        "name": "test-scenario-no-config"
+    }
+    
+    response = client.post("/scenarios", json=scenario_data)
+    
+    # Assert 201 Created
+    assert response.status_code == 201
+    
+    # Check response JSON contains expected fields
+    data = response.json()
+    assert "id" in data
+    assert data["name"] == "test-scenario-no-config"
+    assert data["status"] == "finished"
+    assert "result" in data
+    assert data["result"]["summary"] == "demo result"
+    # Verify that input_config defaults to empty dict when config is omitted
+    assert data["result"]["input_config"] == {}
