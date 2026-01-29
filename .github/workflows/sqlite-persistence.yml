@@ -1,0 +1,287 @@
+name: Add SQLite persistence PR
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "repo-automation"
+          git config user.email "actions@users.noreply.github.com"
+
+      - name: Create branch
+        run: |
+          git checkout -b feature/sqlite-persistence
+
+      - name: Add files (db, scenario, tests, requirements, README)
+        run: |
+          mkdir -p app tests
+
+          # app/db.py
+          cat <<'PY' | sed 's/^  //' > app/db.py
+            from typing import Iterator
+            import os
+
+            from sqlmodel import SQLModel, create_engine, Session
+
+            # Read DATABASE_URL at import time; tests will set this env var before importing
+            DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/gaia.db")
+
+            # SQLite needs check_same_thread=False for file-based DB when using multiple threads
+            connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+
+            engine = create_engine(DATABASE_URL, echo=False, connect_args=connect_args)
+
+
+            def init_db() -> None:
+                """Create DB tables. Call this at app startup or in tests after configuring DATABASE_URL."""
+                SQLModel.metadata.create_all(engine)
+
+
+            def get_session() -> Iterator[Session]:
+                """Yield a session for use in non-FastAPI contexts. For FastAPI dependency use the same pattern."""
+                with Session(engine) as session:
+                    yield session
+          PY
+
+          # app/scenario.py (keeps the existing runner and adds SQLModel persistence)
+          cat <<'PY' | sed 's/^  //' > app/scenario.py
+            """Scenario runner module with SQLite-backed persistence (SQLModel)."""
+
+            import time
+            import os
+            import uuid
+            import datetime
+            from datetime import timezone
+            from typing import Dict, Optional, Any
+
+            from uuid import uuid4
+            from sqlmodel import SQLModel, Field, Session, create_engine, select
+            from sqlalchemy import Column, JSON
+
+            # --- Existing runner (kept as-is) ---
+            def run_scenario(name: str, config: Optional[dict] = None) -> dict:
+                """
+                Execute a scenario with the given name and configuration.
+                This is a simple synchronous runner that simulates work and returns a result dict.
+                """
+                started_at = datetime.datetime.now(timezone.utc)
+                scenario_id = str(uuid4())
+
+                # Simulate some work (small deterministic computation)
+                time.sleep(0.1)
+
+                # Create result payload
+                result_payload = {
+                    "summary": "demo result",
+                    "input_config": config or {}
+                }
+
+                finished_at = datetime.datetime.now(timezone.utc)
+
+                return {
+                    "id": scenario_id,
+                    "name": name,
+                    "status": "finished",
+                    "result": result_payload,
+                    "started_at": started_at.isoformat(),
+                    "finished_at": finished_at.isoformat()
+                }
+
+            # --- DB: SQLModel setup (reads DATABASE_URL, supports in-memory for tests) ---
+            DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/gaia.db")
+            connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+            engine = create_engine(DATABASE_URL, echo=False, connect_args=connect_args)
+
+            class ScenarioModel(SQLModel, table=True):
+                id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+                name: str
+                status: str
+                started_at: datetime.datetime
+                finished_at: Optional[datetime.datetime] = None
+                result: Optional[dict] = Field(default=None, sa_column=Column(JSON), nullable=True)
+                config: Optional[dict] = Field(default=None, sa_column=Column(JSON), nullable=True)
+
+            # Create tables when module imported (safe in most flows)
+            try:
+                SQLModel.metadata.create_all(engine)
+            except Exception:
+                # In some test flows the DATABASE_URL may be set later; ignore creation failure here.
+                pass
+
+            def _model_to_dict(m: ScenarioModel) -> Dict[str, Any]:
+                return {
+                    "id": m.id,
+                    "name": m.name,
+                    "status": m.status,
+                    "started_at": m.started_at.isoformat() if m.started_at else None,
+                    "finished_at": m.finished_at.isoformat() if m.finished_at else None,
+                    "result": m.result,
+                    "config": m.config,
+                }
+
+            def create_and_run_scenario(name: str, config: Optional[dict] = None) -> Dict[str, Any]:
+                """
+                Create a DB row, run the scenario synchronously via run_scenario(), update the row,
+                and return a dict compatible with the previous ScenarioResponse shape.
+                """
+                started = datetime.datetime.utcnow()
+                scenario = ScenarioModel(
+                    name=name,
+                    status="running",
+                    started_at=started,
+                    config=config or {},
+                )
+
+                # Insert initial row
+                with Session(engine) as session:
+                    session.add(scenario)
+                    session.commit()
+                    session.refresh(scenario)
+
+                try:
+                    # Use the local run_scenario implementation above
+                    result = run_scenario(name=name, config=config)
+                    finished = datetime.datetime.utcnow()
+                    with Session(engine) as session:
+                        statement = select(ScenarioModel).where(ScenarioModel.id == scenario.id)
+                        db_row = session.exec(statement).one()
+                        db_row.result = result
+                        db_row.finished_at = finished
+                        db_row.status = "completed"
+                        session.add(db_row)
+                        session.commit()
+                        session.refresh(db_row)
+                    return _model_to_dict(db_row)
+                except Exception as exc:
+                    finished = datetime.datetime.utcnow()
+                    with Session(engine) as session:
+                        statement = select(ScenarioModel).where(ScenarioModel.id == scenario.id)
+                        db_row = session.exec(statement).one()
+                        db_row.finished_at = finished
+                        db_row.status = "failed"
+                        db_row.result = {"error": str(exc)}
+                        session.add(db_row)
+                        session.commit()
+                        session.refresh(db_row)
+                    raise
+
+            def get_scenario(scenario_id: str) -> Optional[Dict[str, Any]]:
+                """Return a dict matching the previous in-memory shape or None."""
+                with Session(engine) as session:
+                    statement = select(ScenarioModel).where(ScenarioModel.id == scenario_id)
+                    result = session.exec(statement).one_or_none()
+                    if not result:
+                        return None
+                    return _model_to_dict(result)
+          PY
+
+          # tests/test_api.py
+          cat <<'PY' | sed 's/^  //' > tests/test_api.py
+            import os
+            import importlib
+            import pytest
+            from fastapi.testclient import TestClient
+
+            # Ensure DATABASE_URL is set before importing app modules that create engines
+            @pytest.fixture(autouse=True)
+            def use_in_memory_db(monkeypatch):
+                # Set in-memory SQLite for tests
+                monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+
+                # Reload db module so it creates an engine bound to the in-memory DB
+                import app.db as db_mod
+                importlib.reload(db_mod)
+                # Initialize DB schema for SQLModel models
+                try:
+                    db_mod.init_db()
+                except AttributeError:
+                    from sqlmodel import SQLModel
+                    SQLModel.metadata.create_all(db_mod.engine)
+
+                # Reload scenario module so it binds to the new engine
+                import app.scenario as sc_mod
+                importlib.reload(sc_mod)
+
+                yield
+
+            # Import app after DATABASE_URL has been configured and modules reloaded
+            from app.main import app  # noqa: E402
+            client = TestClient(app)
+
+
+            def test_post_and_get_scenario():
+                payload = {"name": "test-scenario", "config": {"k": "v"}}
+                post_resp = client.post("/scenarios", json=payload)
+                assert post_resp.status_code == 201
+                assert "Location" in post_resp.headers
+
+                data = post_resp.json()
+                assert data["name"] == payload["name"]
+                assert "id" in data
+                scenario_id = data["id"]
+
+                get_resp = client.get(f"/scenarios/{scenario_id}")
+                assert get_resp.status_code == 200
+                got = get_resp.json()
+                assert got["id"] == scenario_id
+                assert got["result"] is not None
+                assert "summary" in got["result"]
+                assert "input_config" in got["result"]
+
+
+            def test_get_not_found():
+                resp = client.get("/scenarios/nonexistent-id")
+                assert resp.status_code == 404
+          PY
+
+          # requirements.txt: add sqlmodel if file exists or create it
+          if [ -f requirements.txt ]; then
+            echo "sqlmodel>=0.0.8" >> requirements.txt
+          else
+            echo "sqlmodel>=0.0.8" > requirements.txt
+          fi
+
+          # README.md: append a short DB note
+          cat <<'MD' >> README.md
+            ### Database & persistence
+
+            This project now supports a SQLite-backed persistence option for scenarios.
+
+            - By default the app uses a file-based SQLite at `./data/gaia.db`.
+            - To run tests or use an in-memory DB, set:
+              ```bash
+              export DATABASE_URL="sqlite:///:memory:"
+              ```
+            - For production, use migrations (Alembic recommended). TODO: add migration scripts.
+          MD
+
+      - name: Commit & push branch
+        run: |
+          git add -A
+          git commit -m "Replace in-memory scenario store with SQLite persistence (automated)" || echo "No changes to commit"
+          git push --set-upstream origin feature/sqlite-persistence --force
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Create SQLite persistence PR (automated)"
+          branch: feature/sqlite-persistence
+          title: "Replace in-memory scenario store with SQLite persistence"
+          body: |
+            This PR is created by an automated workflow. It replaces the in-memory scenario store with a SQLite-backed store using SQLModel, updates tests to use an in-memory SQLite for CI, and adds sqlmodel to requirements.
+          base: main
+          labels: api, needs-review, openapi
