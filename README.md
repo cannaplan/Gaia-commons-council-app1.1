@@ -58,11 +58,41 @@ What’s included
 Usage Examples
 
 API:
+- **OpenAPI/Swagger Documentation**
+  Visit http://127.0.0.1:8000/docs for the interactive OpenAPI (Swagger UI) documentation.
+
 - Health check (curl)
   ```bash
   curl http://127.0.0.1:8000/health
   ```
   Response: `{"status": "ok"}`
+
+- Create a scenario (POST)
+  ```bash
+  curl -X POST http://127.0.0.1:8000/scenarios \
+    -H "Content-Type: application/json" \
+    -d '{"name": "demo", "config": {"param1": "value1"}}'
+  ```
+  Response (201 Created):
+  ```json
+  {
+    "id": "uuid-here",
+    "name": "demo",
+    "status": "finished",
+    "result": {
+      "summary": "demo result",
+      "input_config": {"param1": "value1"}
+    },
+    "started_at": "2026-01-29T00:00:00Z",
+    "finished_at": "2026-01-29T00:00:01Z"
+  }
+  ```
+
+- Get a scenario by ID (GET)
+  ```bash
+  curl http://127.0.0.1:8000/scenarios/{scenario_id}
+  ```
+  Response (200 OK): Same as POST response above
 
 CLI:
 - Run a scenario
