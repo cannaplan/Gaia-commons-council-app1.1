@@ -4,8 +4,12 @@ import os
 import tempfile
 import pytest
 
-# Use a temp file-based SQLite for tests (more reliable than in-memory with multiple connections)
-test_db_file = tempfile.mktemp(suffix=".db")
+# Create a temporary database file for tests using a safer method
+# NamedTemporaryFile creates a secure temp file and returns a file handle
+_test_db_fd = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+test_db_file = _test_db_fd.name
+_test_db_fd.close()  # Close the file handle but keep the file
+
 os.environ["DATABASE_URL"] = f"sqlite:///{test_db_file}"
 
 from app.db import init_db
