@@ -9,8 +9,9 @@ import time
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
+from sqlmodel import select
 
-from app.db import ScenarioModel, get_session, init_db
+from app.db import ScenarioModel, get_session
 
 
 def run_scenario(name: str, config: Optional[dict] = None) -> dict:
@@ -63,8 +64,8 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
     
     This function:
     1. Creates a DB row with status 'running', started_at timestamp, name and config
-    2. Calls run_scenario() to execute the scenario synchronously
-    3. Updates the DB row with finished_at, status 'completed' (or 'failed'), and result
+    2. Executes the scenario synchronously (inline, not via run_scenario)
+    3. Updates the DB row with finished_at, status ('finished' or 'failed'), and result
     
     Args:
         name: The name of the scenario to run
@@ -87,7 +88,7 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
             config=json.dumps(config) if config else None
         )
         session.add(scenario_model)
-        session.commit()
+        # Note: session.commit() happens automatically in get_session context manager
     
     # Execute the scenario
     try:
@@ -101,7 +102,7 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
         }
         
         finished_at = datetime.now(timezone.utc)
-        status = "completed"
+        status = "finished"
         
     except Exception as e:
         # If scenario execution fails, mark as failed
@@ -120,15 +121,13 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
             scenario_model.finished_at = finished_at
             scenario_model.result = json.dumps(result_payload)
             session.add(scenario_model)
-            session.commit()
-            session.refresh(scenario_model)
+            # Note: session.commit() happens automatically in get_session context manager
     
     # Return dict compatible with ScenarioResponse schema
-    # Note: For compatibility, we return 'finished' instead of 'completed'
     return {
         "id": scenario_id,
         "name": name,
-        "status": "finished",  # Keep backward compatibility
+        "status": status,
         "result": result_payload,
         "started_at": started_at.isoformat(),
         "finished_at": finished_at.isoformat()
@@ -155,12 +154,11 @@ def get_scenario(scenario_id: str) -> Optional[dict]:
         # Parse JSON fields
         result = json.loads(scenario_model.result) if scenario_model.result else None
         
-        # Format timestamps to match the original format (with 'Z' suffix for UTC)
-        # SQLite stores datetime without timezone, so we need to add it back
+        # Format timestamps - SQLite stores datetime without timezone info
+        # so we need to add UTC timezone back for consistency
         started_at = scenario_model.started_at
         if started_at.tzinfo is None:
             started_at = started_at.replace(tzinfo=timezone.utc)
-        started_at_str = started_at.isoformat()
         
         finished_at_str = None
         if scenario_model.finished_at:
@@ -173,9 +171,9 @@ def get_scenario(scenario_id: str) -> Optional[dict]:
         return {
             "id": scenario_model.id,
             "name": scenario_model.name,
-            "status": scenario_model.status if scenario_model.status != "completed" else "finished",
+            "status": scenario_model.status,
             "result": result,
-            "started_at": started_at_str,
+            "started_at": started_at.isoformat(),
             "finished_at": finished_at_str
         }
 
@@ -185,16 +183,14 @@ def clear_scenario_store():
     Clear all scenarios from the database.
     
     This is primarily used for test isolation to ensure a clean state
-    between test runs.
+    between test runs. Uses a bulk delete operation for efficiency.
     """
-    from sqlmodel import select
-    
     with get_session() as session:
-        # Delete all scenarios
+        # Use bulk delete for efficiency
         scenarios = session.exec(select(ScenarioModel)).all()
         for scenario in scenarios:
             session.delete(scenario)
-        session.commit()
+        # Note: session.commit() happens automatically in get_session context manager
 
 
 def create_scenario_record(**kwargs) -> dict:

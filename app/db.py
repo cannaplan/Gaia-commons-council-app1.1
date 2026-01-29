@@ -29,12 +29,25 @@ class ScenarioModel(SQLModel, table=True):
     config: Optional[str] = Field(default=None, description="JSON string of the input configuration")
 
 
-# Get DATABASE_URL from environment variable or use default file-based SQLite
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/gaia.db")
+def get_engine():
+    """Get or create the SQLAlchemy engine.
+    
+    This function is called lazily to ensure DATABASE_URL is read at runtime,
+    not at import time. This allows tests to set the environment variable
+    before the engine is created.
+    """
+    global _engine
+    if _engine is None:
+        # Get DATABASE_URL from environment variable or use default file-based SQLite
+        database_url = os.getenv("DATABASE_URL", "sqlite:///./data/gaia.db")
+        # Create the SQLAlchemy engine
+        # connect_args={"check_same_thread": False} is needed for SQLite to work with FastAPI
+        _engine = create_engine(database_url, connect_args={"check_same_thread": False}, echo=False)
+    return _engine
 
-# Create the SQLAlchemy engine
-# connect_args={"check_same_thread": False} is needed for SQLite to work with FastAPI
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False}, echo=False)
+
+# Global engine instance (created lazily)
+_engine = None
 
 
 def init_db():
@@ -43,8 +56,11 @@ def init_db():
     This should be called once at application startup or in tests.
     For file-based databases, it creates the ./data directory if needed.
     """
+    engine = get_engine()
+    database_url = os.getenv("DATABASE_URL", "sqlite:///./data/gaia.db")
+    
     # Create data directory if using file-based SQLite
-    if DATABASE_URL.startswith("sqlite:///./"):
+    if database_url.startswith("sqlite:///./"):
         os.makedirs("./data", exist_ok=True)
     
     # Create all tables
@@ -62,6 +78,7 @@ def get_session():
     Yields:
         Session: A SQLModel Session instance
     """
+    engine = get_engine()
     session = Session(engine)
     try:
         yield session

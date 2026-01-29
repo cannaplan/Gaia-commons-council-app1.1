@@ -126,7 +126,7 @@ Development
 - Use `pytest -v` for verbose test output
 - Use `pytest --cov=app` to see code coverage
 
-Database
+### Database
 - The application now uses SQLite for scenario persistence (file-based by default)
 - Database location: `./data/gaia.db` (created automatically on first run)
 - For testing, an in-memory SQLite database is used automatically via `DATABASE_URL` environment variable
@@ -135,7 +135,7 @@ Database
   export DATABASE_URL="sqlite:///./custom-path.db"
   ```
 
-Migration Notes
+### Migration Notes
 - **IMPORTANT**: This version introduces SQLite persistence for scenarios. 
 - On first run, the database schema will be created automatically in `./data/gaia.db`
 - For production deployments, ensure the `./data` directory is writable and backed up regularly
