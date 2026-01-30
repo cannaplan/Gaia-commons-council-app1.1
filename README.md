@@ -130,7 +130,68 @@ License
 - This project uses the license text included in the LICENSE file (permission + restrictions + disclaimer).
 
 Next Steps
-1. Add database persistence for scenarios (planned for PR #3)
+1. ~~Add database persistence for scenarios (completed in this release)~~
 2. Implement background task queue for async execution
 3. Add more scenario types and configuration options
 4. Expand API with scenario management endpoints
+
+## Database & Persistence
+
+This project uses SQLite for persisting scenario records.
+
+### Default Database Location
+
+By default, the application uses a file-based SQLite database located at `./data/gaia.db`. The database file and schema are created automatically on first run.
+
+### Database Configuration
+
+The database connection can be configured using the `DATABASE_URL` environment variable:
+
+```bash
+# Use default file-based database (./data/gaia.db)
+uvicorn app.main:app --reload
+
+# Use custom database location
+export DATABASE_URL="sqlite:///./custom/path/database.db"
+uvicorn app.main:app --reload
+
+# For PostgreSQL (example - requires psycopg2 driver)
+export DATABASE_URL="postgresql://user:password@localhost/dbname"
+uvicorn app.main:app --reload
+```
+
+### Running Tests
+
+Tests automatically use a temporary SQLite database to avoid interfering with your development database:
+
+```bash
+# Run all tests (uses temporary test database)
+pytest
+
+# Run with verbose output
+pytest -v
+
+# Run with coverage report
+pytest --cov=app
+```
+
+### Database Migrations
+
+**Note**: Database migrations using Alembic are planned for a future release. For now, the database schema is created automatically on application startup using SQLModel's `metadata.create_all()`. This works well for development but is not recommended for production use.
+
+For production deployments, consider:
+- Using Alembic for schema migrations (planned feature)
+- Backing up your database regularly
+- Using a more robust database like PostgreSQL
+
+### Database Schema
+
+The current schema includes:
+
+- **scenario** table:
+  - `id` (string, primary key): Unique identifier (UUID)
+  - `name` (string): Scenario name
+  - `status` (string): Execution status (e.g., "finished", "running", "failed")
+  - `result` (JSON): Result payload with summary and input configuration
+  - `started_at` (string): ISO timestamp when scenario started
+  - `finished_at` (string, nullable): ISO timestamp when scenario finished
