@@ -27,9 +27,8 @@ def clean_database():
     Clean up database between tests to ensure test isolation.
     
     This fixture:
-    1. Runs before each test
-    2. Yields for the test to run
-    3. Clears the scenario store after the test
+    1. Yields for the test to run
+    2. Clears the scenario store after the test
     """
     yield
     

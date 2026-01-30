@@ -6,7 +6,7 @@ from typing import Dict, Optional
 from uuid import uuid4
 
 from sqlmodel import SQLModel, Field, Column, JSON, select
-from app.db import get_session, engine
+from app.db import engine
 
 # SQLModel for scenario persistence
 class Scenario(SQLModel, table=True):
@@ -18,8 +18,7 @@ class Scenario(SQLModel, table=True):
     started_at: str
     finished_at: str
 
-# TODO: Replace with SQLite database in PR #3
-# In-memory registry for storing scenario records
+# In-memory registry kept for backward compatibility
 _SCENARIO_STORE: Dict[str, dict] = {}
 
 def clear_scenario_store():
@@ -143,10 +142,10 @@ def get_scenario(scenario_id: str) -> Optional[dict]:
 
 def create_scenario_record(**kwargs) -> dict:
     """
-    Placeholder for creating a scenario record in the database.
+    Legacy function kept for backward compatibility.
     
-    This will be replaced with actual DB logic in later PRs.
-    For now, it just returns the kwargs as-is.
+    Returns the kwargs as-is. This function is not actively used
+    in the current implementation.
     
     Args:
         **kwargs: Arbitrary keyword arguments representing scenario data
@@ -154,5 +153,4 @@ def create_scenario_record(**kwargs) -> dict:
     Returns:
         The same data passed in
     """
-    # TODO: Replace with actual DB persistence in PR #3
     return kwargs
