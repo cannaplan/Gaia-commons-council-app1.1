@@ -10,7 +10,9 @@ def client():
     from fastapi.testclient import TestClient
     from app.main import app
     
-    return TestClient(app)
+    # Use TestClient as context manager to ensure lifespan runs
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 def test_post_and_get_scenario(client):

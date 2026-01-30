@@ -32,6 +32,8 @@ def clean_database():
     Clean the database between tests.
     
     This fixture ensures each test starts with a clean database state.
+    The TestClient's lifespan will handle table creation via init_db(),
+    so we only need to drop tables before each test to ensure isolation.
     """
     # Import after setting environment variable
     # Import Scenario model to ensure it's registered with SQLModel metadata
@@ -39,11 +41,11 @@ def clean_database():
     from app.db import engine
     from sqlmodel import SQLModel
     
-    # Drop and recreate all tables before each test
+    # Drop all tables before each test
+    # The lifespan context manager will recreate them when TestClient is created
     SQLModel.metadata.drop_all(engine)
-    SQLModel.metadata.create_all(engine)
     
     yield
     
-    # Clean up after test - tables will be dropped before next test
+    # Tables will be dropped before next test
 

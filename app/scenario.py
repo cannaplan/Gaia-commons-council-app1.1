@@ -100,31 +100,24 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
     Returns:
         A dictionary containing the scenario record with id, name, status,
         result, started_at, and finished_at fields
-        
-    Raises:
-        Exception: If database operations fail
     """
     # Run the scenario (synchronous execution)
     record = run_scenario(name=name, config=config)
     
-    try:
-        # Create Scenario model instance from the record
-        scenario = Scenario(
-            id=record["id"],
-            name=record["name"],
-            status=record["status"],
-            result=record["result"],
-            started_at=record["started_at"],
-            finished_at=record["finished_at"]
-        )
-        
-        # Persist to database
-        with Session(engine) as session:
-            session.add(scenario)
-            session.commit()
-    except Exception as e:
-        # Log the error and re-raise
-        raise Exception(f"Failed to persist scenario to database: {str(e)}") from e
+    # Create Scenario model instance from the record
+    scenario = Scenario(
+        id=record["id"],
+        name=record["name"],
+        status=record["status"],
+        result=record["result"],
+        started_at=record["started_at"],
+        finished_at=record["finished_at"]
+    )
+    
+    # Persist to database
+    with Session(engine) as session:
+        session.add(scenario)
+        session.commit()
     
     return record
 def get_scenario(scenario_id: str) -> Optional[dict]:
@@ -136,28 +129,21 @@ def get_scenario(scenario_id: str) -> Optional[dict]:
         
     Returns:
         The scenario record dictionary if found, None otherwise
-        
-    Raises:
-        Exception: If database query fails
     """
-    try:
-        with Session(engine) as session:
-            statement = select(Scenario).where(Scenario.id == scenario_id)
-            scenario = session.exec(statement).first()
-            
-            if scenario is None:
-                return None
-            
-            # Convert SQLModel to dict matching the expected response shape
-            return {
-                "id": scenario.id,
-                "name": scenario.name,
-                "status": scenario.status,
-                "result": scenario.result,
-                "started_at": scenario.started_at,
-                "finished_at": scenario.finished_at
-            }
-    except Exception as e:
-        # Log the error and re-raise
-        raise Exception(f"Failed to retrieve scenario from database: {str(e)}") from e
+    with Session(engine) as session:
+        statement = select(Scenario).where(Scenario.id == scenario_id)
+        scenario = session.exec(statement).first()
+        
+        if scenario is None:
+            return None
+        
+        # Convert SQLModel to dict matching the expected response shape
+        return {
+            "id": scenario.id,
+            "name": scenario.name,
+            "status": scenario.status,
+            "result": scenario.result,
+            "started_at": scenario.started_at,
+            "finished_at": scenario.finished_at
+        }
 

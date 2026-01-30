@@ -2,6 +2,7 @@
 
 import os
 from typing import Iterator
+from pathlib import Path
 
 from sqlmodel import SQLModel, Session, create_engine
 
@@ -9,9 +10,13 @@ from sqlmodel import SQLModel, Session, create_engine
 # Read DATABASE_URL at import time; tests will set this env var before importing
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/gaia.db")
 
-# Create data directory if using default SQLite path
-if DATABASE_URL.startswith("sqlite:///./data/"):
-    os.makedirs("./data", exist_ok=True)
+# Create directory for SQLite databases if needed
+if DATABASE_URL.startswith("sqlite:///"):
+    # Extract path from sqlite:///path/to/db.db format
+    db_path = DATABASE_URL.replace("sqlite:///", "")
+    db_dir = os.path.dirname(db_path)
+    if db_dir and db_dir not in (".", ""):
+        os.makedirs(db_dir, exist_ok=True)
 
 # SQLite needs check_same_thread=False for file-based DB when using multiple threads
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
