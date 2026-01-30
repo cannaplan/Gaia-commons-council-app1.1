@@ -3,8 +3,12 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
+from app.db import init_db
 from app import scenario
+from app.main import app
+
+# Initialize database tables (DATABASE_URL is set in conftest.py)
+init_db()
 
 client = TestClient(app)
 
