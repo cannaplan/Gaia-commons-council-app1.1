@@ -24,8 +24,8 @@ class Scenario(SQLModel, table=True):
         finished_at: ISO timestamp when scenario finished
     """
     id: str = Field(primary_key=True, max_length=36)
-    name: str
-    status: str
+    name: str = Field(max_length=255)
+    status: str = Field(max_length=50)
     result: Optional[dict] = Field(default=None, sa_column=Column(JSON))
     started_at: str
     finished_at: Optional[str] = None
