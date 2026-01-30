@@ -6,6 +6,14 @@ from sqlmodel import SQLModel, create_engine, Session
 # Read DATABASE_URL from environment, default to SQLite file
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/gaia.db")
 
+# Ensure directory exists for file-based SQLite databases
+if DATABASE_URL.startswith("sqlite") and DATABASE_URL != "sqlite:///:memory:":
+    # Extract filesystem path from URL (e.g., "./data/gaia.db" from "sqlite:///./data/gaia.db")
+    db_path = DATABASE_URL.split(":///", 1)[-1]
+    if db_path and not db_path.startswith(":"):
+        db_dir = os.path.dirname(db_path)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
 # Create engine with check_same_thread=False for SQLite
 # This allows SQLite to be used with FastAPI's async endpoints
 # For in-memory databases, we use connect_args to ensure the connection stays alive
