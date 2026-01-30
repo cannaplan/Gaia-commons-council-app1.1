@@ -43,6 +43,12 @@ htmlcov/
 .env
 .env.local
 
+# Database
+data/
+*.db
+*.sqlite
+*.sqlite3
+
 # OS
 .DS_Store
 Thumbs.db

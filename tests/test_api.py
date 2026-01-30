@@ -9,14 +9,6 @@ from app import scenario
 client = TestClient(app)
 
 
-@pytest.fixture(autouse=True)
-def clear_scenario_store():
-    """Clear the scenario store before each test to ensure test isolation."""
-    scenario.clear_scenario_store()
-    yield
-    scenario.clear_scenario_store()
-
-
 def test_post_and_get_scenario():
     """Test creating a scenario via POST and retrieving it via GET."""
     # Create a scenario
