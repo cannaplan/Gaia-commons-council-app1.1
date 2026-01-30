@@ -9,6 +9,11 @@ from uuid import uuid4
 # In-memory registry for storing scenario records
 _SCENARIO_STORE: Dict[str, dict] = {}
 
+def clear_scenario_store():
+    """
+    Clears the in-memory scenario store.
+    """
+    _SCENARIO_STORE.clear()
 
 def run_scenario(name: str, config: Optional[dict] = None) -> dict:
     """
@@ -54,7 +59,6 @@ def run_scenario(name: str, config: Optional[dict] = None) -> dict:
         "finished_at": finished_at.isoformat()
     }
 
-
 def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
     """
     Create and execute a scenario, storing it in the in-memory registry.
@@ -79,8 +83,6 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
     _SCENARIO_STORE[record["id"]] = record
     
     return record
-
-
 def get_scenario(scenario_id: str) -> Optional[dict]:
     """
     Retrieve a scenario record from the in-memory registry.
@@ -95,7 +97,6 @@ def get_scenario(scenario_id: str) -> Optional[dict]:
     """
     # TODO: Replace with SQLite database query in PR #3
     return _SCENARIO_STORE.get(scenario_id)
-
 
 def create_scenario_record(**kwargs) -> dict:
     """
