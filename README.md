@@ -114,11 +114,27 @@ CLI:
   }
   ```
 
+Database & Persistence
+- By default, scenario records are stored in a SQLite database at `./data/gaia.db`
+- The database location can be configured via the `DATABASE_URL` environment variable
+  ```bash
+  # Use a custom SQLite file
+  export DATABASE_URL="sqlite:///./my-custom-path/gaia.db"
+  
+  # For production, you could use PostgreSQL
+  export DATABASE_URL="postgresql://user:password@localhost/gaia"
+  ```
+- Tests automatically use an in-memory SQLite database (`sqlite:///:memory:`) for speed and isolation
+- Database tables are created automatically on first use
+- **TODO**: Database migrations with Alembic are planned for future releases to handle schema changes
+
 Tests:
 - Run tests
   ```bash
   pytest
   ```
+- Tests use an in-memory SQLite database for isolation and speed
+- Each test automatically cleans up after itself
 
 Development
 - Tests are located in `tests/` directory
@@ -130,7 +146,7 @@ License
 - This project uses the license text included in the LICENSE file (permission + restrictions + disclaimer).
 
 Next Steps
-1. Add database persistence for scenarios (planned for PR #3)
-2. Implement background task queue for async execution
+1. Implement background task queue for async execution
+2. Add database migrations with Alembic
 3. Add more scenario types and configuration options
 4. Expand API with scenario management endpoints
