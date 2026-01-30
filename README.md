@@ -155,7 +155,9 @@ uvicorn app.main:app --reload
 export DATABASE_URL="sqlite:///./custom/path/database.db"
 uvicorn app.main:app --reload
 
-# For PostgreSQL (example - requires psycopg2 driver)
+# For PostgreSQL (advanced/optional)
+# NOTE: You must install a PostgreSQL driver (e.g. psycopg2-binary or asyncpg) separately;
+# these drivers are NOT included in requirements.txt.
 export DATABASE_URL="postgresql://user:password@localhost/dbname"
 uvicorn app.main:app --reload
 ```
