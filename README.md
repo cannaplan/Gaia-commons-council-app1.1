@@ -126,11 +126,24 @@ Development
 - Use `pytest -v` for verbose test output
 - Use `pytest --cov=app` to see code coverage
 
+Database & Persistence
+- **Default**: The application uses a file-based SQLite database at `./data/gaia.db` for persisting scenario records
+- **File location**: The database file is created automatically in the `data/` directory (which is git-ignored)
+- **In tests**: Tests use a temporary file-based SQLite database (created and cleaned up automatically)
+- **Custom database**: Set the `DATABASE_URL` environment variable to use a different database:
+  ```bash
+  export DATABASE_URL="sqlite:///path/to/your/database.db"
+  # Or for PostgreSQL (requires psycopg2):
+  # export DATABASE_URL="postgresql://user:password@localhost/dbname"
+  ```
+- **Migrations**: Database migrations with Alembic are planned for a future release (TODO)
+- **Models**: Scenarios are stored with id, name, status, result (JSON), started_at, and finished_at fields
+
 License
 - This project uses the license text included in the LICENSE file (permission + restrictions + disclaimer).
 
 Next Steps
-1. Add database persistence for scenarios (planned for PR #3)
+1. ~~Add database persistence for scenarios~~ ✅ Completed in this release
 2. Implement background task queue for async execution
 3. Add more scenario types and configuration options
 4. Expand API with scenario management endpoints

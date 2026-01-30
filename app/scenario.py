@@ -1,19 +1,44 @@
-"""Scenario runner module for executing scenarios."""
+"""Scenario runner module for executing scenarios with SQLite persistence."""
 
 import time
 from datetime import datetime, timezone
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from uuid import uuid4
 
-# TODO: Replace with SQLite database in PR #3
-# In-memory registry for storing scenario records
-_SCENARIO_STORE: Dict[str, dict] = {}
+from sqlmodel import SQLModel, Field, Session, select
+from sqlalchemy import Column, JSON
+
+from app.db import engine
+
+
+# SQLModel for Scenario persistence
+class Scenario(SQLModel, table=True):
+    """SQLModel for storing scenario execution records in the database."""
+    
+    id: str = Field(primary_key=True)
+    name: str
+    status: str
+    result: Optional[dict] = Field(default=None, sa_column=Column(JSON))
+    started_at: str
+    finished_at: Optional[str] = None
 
 def clear_scenario_store():
     """
-    Clears the in-memory scenario store.
+    Clears the scenario store (for backward compatibility with tests).
+    
+    This function is kept for backward compatibility but now clears the database
+    instead of an in-memory store. For tests, use DATABASE_URL=sqlite:///:memory:
+    and recreate tables via init_db() instead.
     """
-    _SCENARIO_STORE.clear()
+    # For file-based DB, this would delete all records
+    # For in-memory DB used in tests, tables are recreated per test
+    with Session(engine) as session:
+        # Delete all scenario records
+        statement = select(Scenario)
+        results = session.exec(statement).all()
+        for scenario in results:
+            session.delete(scenario)
+        session.commit()
 
 def run_scenario(name: str, config: Optional[dict] = None) -> dict:
     """
@@ -61,11 +86,10 @@ def run_scenario(name: str, config: Optional[dict] = None) -> dict:
 
 def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
     """
-    Create and execute a scenario, storing it in the in-memory registry.
+    Create and execute a scenario, storing it in the SQLite database.
     
-    This function runs the scenario synchronously and stores the result
-    in the in-memory _SCENARIO_STORE. In PR #3, this will be replaced
-    with SQLite persistence.
+    This function runs the scenario synchronously and persists the result
+    in the database using SQLModel.
     
     Args:
         name: The name of the scenario to run
@@ -78,16 +102,27 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
     # Run the scenario (synchronous execution)
     record = run_scenario(name=name, config=config)
     
-    # Store in the in-memory registry
-    # TODO: Replace with SQLite database in PR #3
-    _SCENARIO_STORE[record["id"]] = record
+    # Create a Scenario model instance from the result
+    scenario = Scenario(
+        id=record["id"],
+        name=record["name"],
+        status=record["status"],
+        result=record["result"],
+        started_at=record["started_at"],
+        finished_at=record["finished_at"]
+    )
     
+    # Persist to database
+    with Session(engine) as session:
+        session.add(scenario)
+        session.commit()
+        session.refresh(scenario)
+    
+    # Return as dict (same structure as before)
     return record
 def get_scenario(scenario_id: str) -> Optional[dict]:
     """
-    Retrieve a scenario record from the in-memory registry.
-    
-    In PR #3, this will be replaced with SQLite database lookup.
+    Retrieve a scenario record from the SQLite database.
     
     Args:
         scenario_id: The unique identifier (UUID) of the scenario
@@ -95,21 +130,20 @@ def get_scenario(scenario_id: str) -> Optional[dict]:
     Returns:
         The scenario record dictionary if found, None otherwise
     """
-    # TODO: Replace with SQLite database query in PR #3
-    return _SCENARIO_STORE.get(scenario_id)
-
-def create_scenario_record(**kwargs) -> dict:
-    """
-    Placeholder for creating a scenario record in the database.
-    
-    This will be replaced with actual DB logic in later PRs.
-    For now, it just returns the kwargs as-is.
-    
-    Args:
-        **kwargs: Arbitrary keyword arguments representing scenario data
+    with Session(engine) as session:
+        statement = select(Scenario).where(Scenario.id == scenario_id)
+        scenario = session.exec(statement).first()
         
-    Returns:
-        The same data passed in
-    """
-    # TODO: Replace with actual DB persistence in PR #3
-    return kwargs
+        if scenario is None:
+            return None
+        
+        # Convert SQLModel to dict matching the expected response shape
+        return {
+            "id": scenario.id,
+            "name": scenario.name,
+            "status": scenario.status,
+            "result": scenario.result,
+            "started_at": scenario.started_at,
+            "finished_at": scenario.finished_at
+        }
+

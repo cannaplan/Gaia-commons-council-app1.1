@@ -1,13 +1,31 @@
 """FastAPI application with health endpoint."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
 from app.api import router as api_router
+from app.db import init_db
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for startup and shutdown events.
+    
+    This initializes the database on startup.
+    """
+    # Startup: Initialize database
+    init_db()
+    yield
+    # Shutdown: Nothing to clean up for now
+
 
 app = FastAPI(
     title="Gaia Commons Council API",
     description="Planetary transformation framework API",
-    version="0.1.0"
+    version="0.1.0",
+    lifespan=lifespan
 )
 
 # Include API router with scenario endpoints
