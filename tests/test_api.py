@@ -1,23 +1,19 @@
 """Tests for the API endpoints."""
 
 import pytest
-from fastapi.testclient import TestClient
-
-from app.main import app
-from app import scenario
-
-client = TestClient(app)
 
 
-@pytest.fixture(autouse=True)
-def clear_scenario_store():
-    """Clear the scenario store before each test to ensure test isolation."""
-    scenario.clear_scenario_store()
-    yield
-    scenario.clear_scenario_store()
+@pytest.fixture(scope="function")
+def client():
+    """Create a test client for the FastAPI app."""
+    # Import here so it happens after conftest sets DATABASE_URL
+    from fastapi.testclient import TestClient
+    from app.main import app
+    
+    return TestClient(app)
 
 
-def test_post_and_get_scenario():
+def test_post_and_get_scenario(client):
     """Test creating a scenario via POST and retrieving it via GET."""
     # Create a scenario
     scenario_data = {
@@ -60,7 +56,7 @@ def test_post_and_get_scenario():
     assert get_json["name"] == "test-scenario"
 
 
-def test_get_not_found():
+def test_get_not_found(client):
     """Test that GET returns 404 for a non-existent scenario."""
     # Try to get a non-existent scenario
     non_existent_id = "00000000-0000-0000-0000-000000000000"
@@ -76,7 +72,7 @@ def test_get_not_found():
     assert non_existent_id in response_json["detail"]
 
 
-def test_post_scenario_without_config():
+def test_post_scenario_without_config(client):
     """Test creating a scenario without optional config."""
     # Create a scenario with only name (no config)
     scenario_data = {
@@ -93,3 +89,4 @@ def test_post_scenario_without_config():
     response_json = response.json()
     assert response_json["name"] == "simple-scenario"
     assert response_json["result"]["input_config"] == {}
+
