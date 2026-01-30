@@ -5,15 +5,10 @@ from datetime import datetime, timezone
 from typing import Dict, Optional
 from uuid import uuid4
 
-from sqlmodel import SQLModel, Field, Session, select
+from sqlmodel import SQLModel, Field, Session, select, delete
 from sqlalchemy import Column, JSON
 
-
-# Import engine dynamically to ensure tests can override DATABASE_URL
-def get_engine():
-    """Get the database engine, importing it dynamically."""
-    from app.db import engine
-    return engine
+from app.db import engine
 
 
 class Scenario(SQLModel, table=True):
@@ -28,7 +23,7 @@ class Scenario(SQLModel, table=True):
         started_at: ISO timestamp when scenario started
         finished_at: ISO timestamp when scenario finished
     """
-    id: str = Field(primary_key=True)
+    id: str = Field(primary_key=True, max_length=36)
     name: str
     status: str
     result: Optional[dict] = Field(default=None, sa_column=Column(JSON))
@@ -40,16 +35,11 @@ def clear_scenario_store():
     """
     Clears the scenario store (for backward compatibility with tests).
     
-    This now clears the database tables instead of in-memory store.
-    For tests, it's better to use a fresh in-memory database or truncate tables.
+    This deletes all scenario records from the database.
     """
-    # For DB-backed storage, we delete all records
-    engine = get_engine()
+    # Use bulk delete for efficiency
     with Session(engine) as session:
-        # Delete all scenarios
-        scenarios = session.exec(select(Scenario)).all()
-        for scenario in scenarios:
-            session.delete(scenario)
+        session.exec(delete(Scenario))
         session.commit()
 
 def run_scenario(name: str, config: Optional[dict] = None) -> dict:
@@ -110,26 +100,31 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
     Returns:
         A dictionary containing the scenario record with id, name, status,
         result, started_at, and finished_at fields
+        
+    Raises:
+        Exception: If database operations fail
     """
     # Run the scenario (synchronous execution)
     record = run_scenario(name=name, config=config)
     
-    # Create Scenario model instance from the record
-    scenario = Scenario(
-        id=record["id"],
-        name=record["name"],
-        status=record["status"],
-        result=record["result"],
-        started_at=record["started_at"],
-        finished_at=record["finished_at"]
-    )
-    
-    # Persist to database
-    engine = get_engine()
-    with Session(engine) as session:
-        session.add(scenario)
-        session.commit()
-        session.refresh(scenario)
+    try:
+        # Create Scenario model instance from the record
+        scenario = Scenario(
+            id=record["id"],
+            name=record["name"],
+            status=record["status"],
+            result=record["result"],
+            started_at=record["started_at"],
+            finished_at=record["finished_at"]
+        )
+        
+        # Persist to database
+        with Session(engine) as session:
+            session.add(scenario)
+            session.commit()
+    except Exception as e:
+        # Log the error and re-raise
+        raise Exception(f"Failed to persist scenario to database: {str(e)}") from e
     
     return record
 def get_scenario(scenario_id: str) -> Optional[dict]:
@@ -141,22 +136,28 @@ def get_scenario(scenario_id: str) -> Optional[dict]:
         
     Returns:
         The scenario record dictionary if found, None otherwise
+        
+    Raises:
+        Exception: If database query fails
     """
-    engine = get_engine()
-    with Session(engine) as session:
-        statement = select(Scenario).where(Scenario.id == scenario_id)
-        scenario = session.exec(statement).first()
-        
-        if scenario is None:
-            return None
-        
-        # Convert SQLModel to dict matching the expected response shape
-        return {
-            "id": scenario.id,
-            "name": scenario.name,
-            "status": scenario.status,
-            "result": scenario.result,
-            "started_at": scenario.started_at,
-            "finished_at": scenario.finished_at
-        }
+    try:
+        with Session(engine) as session:
+            statement = select(Scenario).where(Scenario.id == scenario_id)
+            scenario = session.exec(statement).first()
+            
+            if scenario is None:
+                return None
+            
+            # Convert SQLModel to dict matching the expected response shape
+            return {
+                "id": scenario.id,
+                "name": scenario.name,
+                "status": scenario.status,
+                "result": scenario.result,
+                "started_at": scenario.started_at,
+                "finished_at": scenario.finished_at
+            }
+    except Exception as e:
+        # Log the error and re-raise
+        raise Exception(f"Failed to retrieve scenario from database: {str(e)}") from e
 

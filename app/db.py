@@ -9,6 +9,10 @@ from sqlmodel import SQLModel, Session, create_engine
 # Read DATABASE_URL at import time; tests will set this env var before importing
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/gaia.db")
 
+# Create data directory if using default SQLite path
+if DATABASE_URL.startswith("sqlite:///./data/"):
+    os.makedirs("./data", exist_ok=True)
+
 # SQLite needs check_same_thread=False for file-based DB when using multiple threads
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 
@@ -27,18 +31,25 @@ def init_db() -> None:
 
 def get_session() -> Iterator[Session]:
     """
-    Yield a database session for use in non-FastAPI contexts.
+    Yield a database session.
     
-    For FastAPI dependency injection, use the same pattern with Depends().
+    This generator can be used as a context manager or in FastAPI dependency injection.
     
-    Example:
-        with next(get_session()) as session:
-            # Use session here
-            pass
+    Example usage in FastAPI:
+        from fastapi import Depends
+        from app.db import get_session
+        
+        @app.get("/items")
+        def get_items(session: Session = Depends(get_session)):
+            items = session.exec(select(Item)).all()
+            return items
     
-    Or as a generator:
+    Example usage as context manager:
+        from app.db import get_session
+        
         for session in get_session():
             # Use session here
+            items = session.exec(select(Item)).all()
             break
     """
     with Session(engine) as session:
