@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 @router.post("/scenarios", response_model=ScenarioResponse, status_code=status.HTTP_201_CREATED)
-async def create_scenario_endpoint(
+async def post_scenario(
     scenario: ScenarioCreate,
     response: Response
 ):

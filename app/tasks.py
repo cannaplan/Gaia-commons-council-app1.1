@@ -159,7 +159,7 @@ def run_scenario_task(scenario_id: str, task_id: str) -> None:
             "started_at": started_at
         })
         
-        # Mark scenario as running
+        # Mark scenario as running and get config/name
         with Session(engine) as session:
             statement = select(Scenario).where(Scenario.id == scenario_id)
             scenario = session.exec(statement).first()
@@ -167,17 +167,14 @@ def run_scenario_task(scenario_id: str, task_id: str) -> None:
             if scenario is None:
                 raise Exception(f"Scenario with id '{scenario_id}' not found")
             
+            # Store values we need before updating
+            config = scenario.config
+            name = scenario.name
+            
             scenario.status = "running"
             scenario.started_at = started_at
             session.add(scenario)
             session.commit()
-        
-        # Get scenario config from database
-        with Session(engine) as session:
-            statement = select(Scenario).where(Scenario.id == scenario_id)
-            scenario = session.exec(statement).first()
-            config = scenario.config if scenario else None
-            name = scenario.name if scenario else "unknown"
         
         # Run the scenario (this is synchronous and returns the result)
         result = run_scenario(name=name, config=config)
