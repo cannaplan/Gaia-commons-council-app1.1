@@ -47,7 +47,7 @@ Quickstart (beginner-friendly)
    pytest --cov=app
 
 What’s included
-- app/main.py — minimal FastAPI app with a health endpoint.
+- app/main.py — FastAPI app with health endpoint and scenario management API.
 - app/cli.py — CLI entrypoint (click) with a run-scenario stub.
 - requirements.txt — minimal package list to run the app and CLI.
 - .env.example — example environment variables.
@@ -83,8 +83,8 @@ API:
       "summary": "demo result",
       "input_config": {"param1": "value1"}
     },
-    "started_at": "2026-01-29T00:00:00Z",
-    "finished_at": "2026-01-29T00:00:01Z"
+    "started_at": "2026-01-29T00:00:00+00:00",
+    "finished_at": "2026-01-29T00:00:01+00:00"
   }
   ```
 
@@ -109,8 +109,8 @@ CLI:
       "summary": "demo result",
       "input_config": {}
     },
-    "started_at": "2026-01-29T00:00:00",
-    "finished_at": "2026-01-29T00:00:01"
+    "started_at": "2026-01-29T00:00:00+00:00",
+    "finished_at": "2026-01-29T00:00:01+00:00"
   }
   ```
 
