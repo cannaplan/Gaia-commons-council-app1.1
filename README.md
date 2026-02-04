@@ -129,7 +129,7 @@ Development
 ### Database
 - The application now uses SQLite for scenario persistence (file-based by default)
 - Database location: `./data/gaia.db` (created automatically on first run)
-- For testing, an in-memory SQLite database is used automatically via `DATABASE_URL` environment variable
+- For testing, a temporary file-based SQLite database is used automatically via the `DATABASE_URL` environment variable (configured in the test fixtures)
 - To use a different database, set the `DATABASE_URL` environment variable:
   ```bash
   export DATABASE_URL="sqlite:///./custom-path.db"
