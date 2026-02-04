@@ -54,14 +54,23 @@ def init_db():
     """Initialize the database by creating all tables.
     
     This should be called once at application startup or in tests.
-    For file-based databases, it creates the ./data directory if needed.
+    For file-based SQLite databases, it creates the parent directory if needed.
     """
     engine = get_engine()
     database_url = os.getenv("DATABASE_URL", "sqlite:///./data/gaia.db")
     
-    # Create data directory if using file-based SQLite
-    if database_url.startswith("sqlite:///./"):
-        os.makedirs("./data", exist_ok=True)
+    # Create parent directory if using file-based SQLite (relative or absolute path)
+    if database_url.startswith("sqlite:///"):
+        path_part = database_url[len("sqlite:///") :]
+        # Skip in-memory SQLite
+        if path_part and not path_part.startswith(":memory:"):
+            if path_part.startswith("/"):
+                db_path = path_part
+            else:
+                db_path = os.path.join(os.getcwd(), path_part)
+            db_dir = os.path.dirname(db_path)
+            if db_dir:
+                os.makedirs(db_dir, exist_ok=True)
     
     # Create all tables
     SQLModel.metadata.create_all(engine)
