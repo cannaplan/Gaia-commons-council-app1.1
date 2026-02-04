@@ -16,7 +16,7 @@ from sqlmodel import Field, SQLModel, Session, create_engine
 class ScenarioModel(SQLModel, table=True):
     """SQLModel representing a scenario in the database.
     
-    Maps to the 'scenariomodel' table with fields matching ScenarioResponse schema.
+    Maps to the 'scenarios' table with fields matching ScenarioResponse schema.
     """
     __tablename__ = "scenarios"
     
