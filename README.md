@@ -142,6 +142,16 @@ Development
 - TODO: Implement proper database migrations using Alembic or similar tool for future schema changes
 - The database is initialized on application startup; no manual migration is required for the initial deployment
 
+### Production Considerations
+- **Horizontal Scaling**: SQLite file-based databases are not suitable for concurrent writes from multiple application instances. For horizontal scaling with multiple FastAPI workers or instances:
+  - Consider enabling WAL (Write-Ahead Logging) mode for better concurrent read performance
+  - For true horizontal scaling, migrate to a client-server database (PostgreSQL, MySQL, etc.)
+- **Backup Strategy**: 
+  - Implement regular backups of the `./data/gaia.db` file
+  - Use SQLite's `.backup` command or file system snapshots
+  - Test restore procedures regularly
+- **Performance**: For production workloads with high write concurrency, monitor for database lock contention and consider migrating to a client-server database
+
 License
 - This project uses the license text included in the LICENSE file (permission + restrictions + disclaimer).
 

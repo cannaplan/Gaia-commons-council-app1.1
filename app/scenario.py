@@ -96,16 +96,20 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
     started_at = datetime.now(timezone.utc)
     
     # Create initial database record with status 'running'
-    with get_session() as session:
-        scenario_model = ScenarioModel(
-            id=scenario_id,
-            name=name,
-            status="running",
-            started_at=started_at,
-            config=json.dumps(config) if config else None
-        )
-        session.add(scenario_model)
-        # Note: session.commit() happens automatically in get_session context manager
+    try:
+        with get_session() as session:
+            scenario_model = ScenarioModel(
+                id=scenario_id,
+                name=name,
+                status="running",
+                started_at=started_at,
+                config=json.dumps(config) if config else None
+            )
+            session.add(scenario_model)
+            # Note: session.commit() happens automatically in get_session context manager
+    except Exception as e:
+        # If initial insert fails, raise an exception - cannot proceed without a record
+        raise RuntimeError(f"Failed to create scenario record in database: {str(e)}") from e
     
     # Execute the scenario using shared helper function
     try:
@@ -124,12 +128,15 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
     # Update database record with results
     with get_session() as session:
         scenario_model = session.get(ScenarioModel, scenario_id)
-        if scenario_model:
-            scenario_model.status = status
-            scenario_model.finished_at = finished_at
-            scenario_model.result = json.dumps(result_payload)
-            session.add(scenario_model)
-            # Note: session.commit() happens automatically in get_session context manager
+        if scenario_model is None:
+            # This should not happen if initial insert succeeded, but handle defensively
+            raise RuntimeError(f"Scenario record {scenario_id} not found in database after execution")
+        
+        scenario_model.status = status
+        scenario_model.finished_at = finished_at
+        scenario_model.result = json.dumps(result_payload)
+        session.add(scenario_model)
+        # Note: session.commit() happens automatically in get_session context manager
     
     # Return dict compatible with ScenarioResponse schema
     return {

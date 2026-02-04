@@ -65,7 +65,9 @@ def init_db():
     For file-based SQLite databases, it creates the parent directory if needed.
     """
     engine = get_engine()
-    database_url = os.getenv("DATABASE_URL", "sqlite:///./data/gaia.db")
+    
+    # Get the database URL from the engine to ensure consistency
+    database_url = str(engine.url)
     
     # Create parent directory if using file-based SQLite (relative or absolute path)
     if database_url.startswith("sqlite:///"):
