@@ -1,5 +1,6 @@
 """Scenario runner module for executing scenarios."""
 
+import threading
 import time
 from datetime import datetime, timezone
 from typing import Dict, Optional
@@ -7,7 +8,9 @@ from uuid import uuid4
 
 # TODO: Replace with database persistence in PR #3
 # In-memory registry for storing scenario records
+# Protected by lock for thread-safe access under concurrent FastAPI requests
 _SCENARIO_STORE: Dict[str, dict] = {}
+_STORE_LOCK = threading.Lock()
 
 
 def run_scenario(name: str, config: Optional[dict] = None) -> dict:
@@ -91,7 +94,9 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
     record = run_scenario(name=name, config=config)
     
     # Store in the in-memory registry (TODO: replace with DB in PR #3)
-    _SCENARIO_STORE[record["id"]] = record
+    # Use lock to prevent race conditions under concurrent requests
+    with _STORE_LOCK:
+        _SCENARIO_STORE[record["id"]] = record
     
     return record
 
@@ -109,4 +114,6 @@ def get_scenario(scenario_id: str) -> Optional[dict]:
         The scenario record dict if found, None otherwise
     """
     # TODO: Replace with database query in PR #3
-    return _SCENARIO_STORE.get(scenario_id)
+    # Use lock to prevent race conditions under concurrent requests
+    with _STORE_LOCK:
+        return _SCENARIO_STORE.get(scenario_id)
