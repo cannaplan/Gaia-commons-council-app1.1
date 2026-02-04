@@ -1,6 +1,5 @@
 """API router for scenario management endpoints."""
 
-from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Response, status
@@ -8,7 +7,7 @@ from sqlmodel import Session, select
 
 from app.db import engine
 from app.scenario import Scenario, get_scenario
-from app.tasks import Task, create_task_record, get_task_record, run_scenario_task
+from app.tasks import create_task_record, get_task_record, run_scenario_task
 from app.schemas import ScenarioCreate, ScenarioResponse, TaskCreateResponse, TaskResponse
 
 router = APIRouter()
@@ -34,15 +33,13 @@ async def create_scenario(
         ScenarioResponse with the created scenario (status='pending')
     """
     scenario_id = str(uuid4())
-    created_at = datetime.now(timezone.utc).isoformat()
     
-    # Create scenario record in database
+    # Create scenario record in database (not started yet)
     scenario_record = Scenario(
         id=scenario_id,
         name=scenario.name,
         status="pending",
-        config=scenario.config,
-        started_at=created_at
+        config=scenario.config
     )
     
     with Session(engine) as session:

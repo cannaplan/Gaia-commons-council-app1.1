@@ -151,7 +151,7 @@ def run_scenario_task(scenario_id: str, task_id: str) -> None:
             "started_at": started_at
         })
         
-        # Update scenario to running
+        # Update scenario to running and get scenario data
         with Session(engine) as session:
             statement = select(Scenario).where(Scenario.id == scenario_id)
             scenario = session.exec(statement).first()
@@ -159,17 +159,15 @@ def run_scenario_task(scenario_id: str, task_id: str) -> None:
             if scenario is None:
                 raise FileNotFoundError(f"Scenario with id '{scenario_id}' not found")
             
+            # Capture scenario data before updating
+            scenario_name = scenario.name
+            scenario_config = scenario.config
+            
+            # Update scenario status
             scenario.status = "running"
             scenario.started_at = started_at
             session.add(scenario)
             session.commit()
-        
-        # Retrieve scenario config from DB
-        with Session(engine) as session:
-            statement = select(Scenario).where(Scenario.id == scenario_id)
-            scenario = session.exec(statement).first()
-            scenario_name = scenario.name
-            scenario_config = scenario.config
         
         # Run the scenario (synchronous execution)
         result = run_scenario(name=scenario_name, config=scenario_config)

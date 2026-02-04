@@ -18,9 +18,13 @@ class Scenario(SQLModel, table=True):
     id: str = Field(primary_key=True)
     name: str
     status: str
-    config: Optional[dict] = Field(default=None, sa_column=Column(JSON))
+    config: Optional[dict] = Field(
+        default=None, 
+        sa_column=Column(JSON),
+        description="Configuration dictionary for the scenario execution"
+    )
     result: Optional[dict] = Field(default=None, sa_column=Column(JSON))
-    started_at: str
+    started_at: Optional[str] = None
     finished_at: Optional[str] = None
 
 def clear_scenario_store():
