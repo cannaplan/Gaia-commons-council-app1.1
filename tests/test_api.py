@@ -39,12 +39,10 @@ def test_post_and_get_scenario():
     response_json = post_response.json()
     assert "id" in response_json
     assert response_json["name"] == "test-scenario"
-    assert response_json["status"] == "finished"
-    assert "result" in response_json
-    assert response_json["result"]["summary"] == "demo result"
-    assert response_json["result"]["input_config"] == {"param1": "value1", "param2": 42}
+    assert response_json["status"] == "pending"
+    assert response_json["config"] == {"param1": "value1", "param2": 42}
+    assert response_json["result"] is None
     assert "started_at" in response_json
-    assert "finished_at" in response_json
     
     # Assert Location header is set
     assert "Location" in post_response.headers
@@ -96,4 +94,6 @@ def test_post_scenario_without_config():
     # Assert response contains expected fields
     response_json = response.json()
     assert response_json["name"] == "simple-scenario"
-    assert response_json["result"]["input_config"] == {}
+    assert response_json["status"] == "pending"
+    assert response_json["config"] is None
+    assert response_json["result"] is None
