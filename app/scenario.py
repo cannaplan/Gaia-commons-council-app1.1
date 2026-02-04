@@ -14,6 +14,34 @@ from sqlmodel import select
 from app.db import ScenarioModel, get_session
 
 
+def _execute_scenario(config: Optional[dict] = None) -> tuple[dict, datetime, datetime]:
+    """
+    Execute scenario logic (shared helper for run_scenario and create_and_run_scenario).
+    
+    This helper function contains the common scenario execution logic to avoid duplication.
+    
+    Args:
+        config: Optional configuration dictionary for the scenario
+        
+    Returns:
+        A tuple containing (result_payload, started_at, finished_at)
+    """
+    started_at = datetime.now(timezone.utc)
+    
+    # Simulate some work (small deterministic computation)
+    time.sleep(0.1)  # Small sleep to simulate processing
+    
+    # Create result payload
+    result_payload = {
+        "summary": "demo result",
+        "input_config": config or {}
+    }
+    
+    finished_at = datetime.now(timezone.utc)
+    
+    return result_payload, started_at, finished_at
+
+
 def run_scenario(name: str, config: Optional[dict] = None) -> dict:
     """
     Execute a scenario with the given name and configuration.
@@ -34,19 +62,8 @@ def run_scenario(name: str, config: Optional[dict] = None) -> dict:
             - started_at: ISO timestamp when scenario started
             - finished_at: ISO timestamp when scenario finished
     """
-    started_at = datetime.now(timezone.utc)
     scenario_id = str(uuid4())
-    
-    # Simulate some work (small deterministic computation)
-    time.sleep(0.1)  # Small sleep to simulate processing
-    
-    # Create result payload
-    result_payload = {
-        "summary": "demo result",
-        "input_config": config or {}
-    }
-    
-    finished_at = datetime.now(timezone.utc)
+    result_payload, started_at, finished_at = _execute_scenario(config)
     
     return {
         "id": scenario_id,
@@ -64,7 +81,7 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
     
     This function:
     1. Creates a DB row with status 'running', started_at timestamp, name and config
-    2. Executes the scenario synchronously (inline, not via run_scenario)
+    2. Executes the scenario synchronously using shared execution logic
     3. Updates the DB row with finished_at, status ('finished' or 'failed'), and result
     
     Args:
@@ -90,18 +107,9 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
         session.add(scenario_model)
         # Note: session.commit() happens automatically in get_session context manager
     
-    # Execute the scenario
+    # Execute the scenario using shared helper function
     try:
-        # Simulate some work (small deterministic computation)
-        time.sleep(0.1)  # Small sleep to simulate processing
-        
-        # Create result payload
-        result_payload = {
-            "summary": "demo result",
-            "input_config": config or {}
-        }
-        
-        finished_at = datetime.now(timezone.utc)
+        result_payload, _, finished_at = _execute_scenario(config)
         status = "finished"
         
     except Exception as e:

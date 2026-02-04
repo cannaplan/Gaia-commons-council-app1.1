@@ -6,6 +6,7 @@ For testing, set DATABASE_URL='sqlite:///:memory:' to use an in-memory database.
 """
 
 import os
+import threading
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Optional
@@ -29,25 +30,32 @@ class ScenarioModel(SQLModel, table=True):
     config: Optional[str] = Field(default=None, description="JSON string of the input configuration")
 
 
+# Global engine instance (created lazily) and lock for thread-safety
+_engine = None
+_engine_lock = threading.Lock()
+
+
 def get_engine():
     """Get or create the SQLAlchemy engine.
     
     This function is called lazily to ensure DATABASE_URL is read at runtime,
     not at import time. This allows tests to set the environment variable
     before the engine is created.
+    
+    Thread-safe implementation using a lock to prevent multiple engine instances
+    in multi-threaded environments (e.g., FastAPI with multiple workers).
     """
     global _engine
     if _engine is None:
-        # Get DATABASE_URL from environment variable or use default file-based SQLite
-        database_url = os.getenv("DATABASE_URL", "sqlite:///./data/gaia.db")
-        # Create the SQLAlchemy engine
-        # connect_args={"check_same_thread": False} is needed for SQLite to work with FastAPI
-        _engine = create_engine(database_url, connect_args={"check_same_thread": False}, echo=False)
+        with _engine_lock:
+            # Double-check pattern: check again inside the lock
+            if _engine is None:
+                # Get DATABASE_URL from environment variable or use default file-based SQLite
+                database_url = os.getenv("DATABASE_URL", "sqlite:///./data/gaia.db")
+                # Create the SQLAlchemy engine
+                # connect_args={"check_same_thread": False} is needed for SQLite to work with FastAPI
+                _engine = create_engine(database_url, connect_args={"check_same_thread": False}, echo=False)
     return _engine
-
-
-# Global engine instance (created lazily)
-_engine = None
 
 
 def init_db():
