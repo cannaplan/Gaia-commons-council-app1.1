@@ -18,6 +18,7 @@ class Scenario(SQLModel, table=True):
     id: str = Field(primary_key=True)
     name: str
     status: str
+    config: Optional[dict] = Field(default=None, sa_column=Column(JSON))
     result: Optional[dict] = Field(default=None, sa_column=Column(JSON))
     started_at: str
     finished_at: Optional[str] = None
@@ -107,6 +108,7 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
         id=record["id"],
         name=record["name"],
         status=record["status"],
+        config=config,
         result=record["result"],
         started_at=record["started_at"],
         finished_at=record["finished_at"]
@@ -142,8 +144,54 @@ def get_scenario(scenario_id: str) -> Optional[dict]:
             "id": scenario.id,
             "name": scenario.name,
             "status": scenario.status,
+            "config": scenario.config,
             "result": scenario.result,
             "started_at": scenario.started_at,
             "finished_at": scenario.finished_at
         }
+
+
+
+def create_scenario(name: str, config: Optional[dict] = None) -> dict:
+    """
+    Create a scenario record in the database without executing it.
+    
+    This is used for the async flow where scenario creation and execution
+    are separated. The scenario is created with status "pending" and will
+    be executed later by a background task.
+    
+    Args:
+        name: The name of the scenario to run
+        config: Optional configuration dictionary for the scenario
+        
+    Returns:
+        A dictionary containing the scenario record with id, name, status,
+        config, and started_at fields
+    """
+    scenario_id = str(uuid4())
+    started_at = datetime.now(timezone.utc).isoformat()
+    
+    scenario = Scenario(
+        id=scenario_id,
+        name=name,
+        status="pending",
+        config=config,
+        started_at=started_at
+    )
+    
+    with Session(engine) as session:
+        session.add(scenario)
+        session.commit()
+        session.refresh(scenario)
+    
+    return {
+        "id": scenario.id,
+        "name": scenario.name,
+        "status": scenario.status,
+        "config": scenario.config,
+        "result": scenario.result,
+        "started_at": scenario.started_at,
+        "finished_at": scenario.finished_at
+    }
+
 
