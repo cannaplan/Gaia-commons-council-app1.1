@@ -22,7 +22,7 @@ class ScenarioModel(SQLModel, table=True):
     
     id: str = Field(primary_key=True, description="UUID primary key")
     name: str = Field(description="Name of the scenario")
-    status: str = Field(description="Status of the scenario (e.g., 'running', 'completed', 'failed')")
+    status: str = Field(description="Status of the scenario (e.g., 'running', 'finished', 'failed')")
     started_at: datetime = Field(description="Timestamp when the scenario started")
     finished_at: Optional[datetime] = Field(default=None, description="Timestamp when the scenario finished")
     result: Optional[str] = Field(default=None, description="JSON string of the result payload")
