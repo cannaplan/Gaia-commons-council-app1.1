@@ -11,6 +11,7 @@ Gaia Commons Council is a planetary transformation framework bridging climate mo
 - **Backend**: Python 3.11+ with FastAPI
 - **API Framework**: FastAPI (with Uvicorn server)
 - **CLI**: Click framework
+- **Database**: SQLite with SQLModel (SQLAlchemy ORM)
 - **Schema Validation**: Pydantic v2.0+
 - **Testing**: pytest with pytest-cov
 - **Configuration**: YAML/JSON support via PyYAML
@@ -23,7 +24,9 @@ Gaia Commons Council is a planetary transformation framework bridging climate mo
   - `cli.py` — Click-based CLI implementation
   - `scenario.py` — Scenario execution logic
   - `schemas.py` — Pydantic models for validation
+  - `db.py` — Database configuration and session management
 - `tests/` — Test suite using pytest
+- `data/` — SQLite database files (git-ignored)
 - `.github/workflows/` — CI/CD workflows
 
 ## Development Commands
@@ -121,6 +124,22 @@ pytest -q
 ### Configuration
 - Support both JSON and YAML configuration files
 - Use environment variables for sensitive data (not committed to repo)
+
+### Database & Persistence
+- Use **SQLModel** for ORM models (combines SQLAlchemy and Pydantic)
+- Default database: SQLite at `./data/gaia.db` (file-based, auto-created)
+- Database URL configurable via `DATABASE_URL` environment variable
+- The `data/` directory is git-ignored — never commit database files
+- Call `init_db()` at application startup to create tables
+- Use `Session` context managers for database operations
+- For tests: Use temporary database (configured in `conftest.py`)
+
+### Security
+- **Never commit secrets, API keys, or passwords** to the repository
+- Use environment variables for all sensitive configuration
+- Validate all user input using Pydantic models
+- Use proper HTTP status codes and error messages (avoid leaking sensitive info)
+- Keep dependencies up-to-date to avoid known vulnerabilities
 
 ## CI/CD
 
