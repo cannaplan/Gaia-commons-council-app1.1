@@ -4,22 +4,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.scenario import _SCENARIO_STORE, _STORE_LOCK
 
 client = TestClient(app)
 
 
-@pytest.fixture(autouse=True)
-def clear_scenario_store():
-    """Clear the in-memory scenario store before each test."""
-    with _STORE_LOCK:
-        _SCENARIO_STORE.clear()
-    yield
-    with _STORE_LOCK:
-        _SCENARIO_STORE.clear()
-
-
 def test_post_and_get_scenario():
+    """Test creating a scenario via POST and retrieving it via GET."""
     """Test creating a scenario via POST and retrieving it via GET."""
     # Create a scenario via POST
     scenario_data = {
