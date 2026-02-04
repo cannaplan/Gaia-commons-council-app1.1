@@ -152,7 +152,14 @@ def get_scenario(scenario_id: str) -> Optional[dict]:
             return None
         
         # Parse JSON fields
-        result = json.loads(scenario_model.result) if scenario_model.result else None
+        if scenario_model.result:
+            try:
+                result = json.loads(scenario_model.result)
+            except json.JSONDecodeError:
+                # Gracefully handle malformed JSON in the stored result
+                result = None
+        else:
+            result = None
         
         # Format timestamps - SQLite stores datetime without timezone info
         # so we need to add UTC timezone back for consistency
