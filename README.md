@@ -64,32 +64,76 @@ API:
   ```
   Response: `{"status": "ok"}`
 
-- Create and run a scenario (POST /scenarios)
-  ```bash
-  curl -X POST http://127.0.0.1:8000/scenarios \
-    -H "Content-Type: application/json" \
-    -d '{"name": "my-scenario", "config": {"param1": "value1"}}'
-  ```
-  Response (201 Created):
-  ```json
-  {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "name": "my-scenario",
-    "status": "finished",
-    "started_at": "2026-01-29T05:00:00Z",
-    "finished_at": "2026-01-29T05:00:01Z",
-    "result": {
-      "summary": "demo result",
-      "input_config": {"param1": "value1"}
-    }
-  }
-  ```
-
-- Get a scenario by ID (GET /scenarios/{id})
-  ```bash
-  curl http://127.0.0.1:8000/scenarios/550e8400-e29b-41d4-a716-446655440000
-  ```
-  Response (200 OK): Same as POST response
+- **Phase A: Async Scenario Execution** (recommended)
+  
+  1. Create a scenario (POST /scenarios)
+     ```bash
+     curl -X POST http://127.0.0.1:8000/scenarios \
+       -H "Content-Type: application/json" \
+       -d '{"name": "my-scenario", "config": {"param1": "value1"}}'
+     ```
+     Response (201 Created):
+     ```json
+     {
+       "id": "550e8400-e29b-41d4-a716-446655440000",
+       "name": "my-scenario",
+       "status": "pending",
+       "config": {"param1": "value1"},
+       "result": null,
+       "started_at": "2026-02-04T10:00:00Z",
+       "finished_at": null
+     }
+     ```
+  
+  2. Enqueue the scenario for execution (POST /scenarios/{id}/run)
+     ```bash
+     curl -X POST http://127.0.0.1:8000/scenarios/550e8400-e29b-41d4-a716-446655440000/run
+     ```
+     Response (202 Accepted):
+     ```json
+     {
+       "task_id": "abc12345-6789-0def-ghij-klmnopqrstuv",
+       "scenario_id": "550e8400-e29b-41d4-a716-446655440000",
+       "status": "pending"
+     }
+     ```
+  
+  3. Poll task status (GET /scenarios/tasks/{task_id})
+     ```bash
+     curl http://127.0.0.1:8000/scenarios/tasks/abc12345-6789-0def-ghij-klmnopqrstuv
+     ```
+     Response (200 OK):
+     ```json
+     {
+       "task_id": "abc12345-6789-0def-ghij-klmnopqrstuv",
+       "scenario_id": "550e8400-e29b-41d4-a716-446655440000",
+       "status": "finished",
+       "error": null,
+       "created_at": "2026-02-04T10:00:01Z",
+       "started_at": "2026-02-04T10:00:02Z",
+       "finished_at": "2026-02-04T10:00:03Z"
+     }
+     ```
+  
+  4. Get scenario result (GET /scenarios/{id})
+     ```bash
+     curl http://127.0.0.1:8000/scenarios/550e8400-e29b-41d4-a716-446655440000
+     ```
+     Response (200 OK):
+     ```json
+     {
+       "id": "550e8400-e29b-41d4-a716-446655440000",
+       "name": "my-scenario",
+       "status": "finished",
+       "config": {"param1": "value1"},
+       "result": {
+         "summary": "demo result",
+         "input_config": {"param1": "value1"}
+       },
+       "started_at": "2026-02-04T10:00:00Z",
+       "finished_at": "2026-02-04T10:00:03Z"
+     }
+     ```
 
 - OpenAPI Documentation (Swagger UI)
   Visit http://127.0.0.1:8000/docs in your browser to explore the interactive API documentation
@@ -137,13 +181,27 @@ Database & Persistence
   # export DATABASE_URL="postgresql://user:password@localhost/dbname"
   ```
 - **Migrations**: Database migrations with Alembic are planned for a future release (TODO)
-- **Models**: Scenarios are stored with id, name, status, result (JSON), started_at, and finished_at fields
+- **Models**: 
+  - **Scenario**: Stores scenario metadata (id, name, status, config, result, timestamps)
+  - **Task**: Stores background task execution status (task_id, scenario_id, status, error, timestamps)
+
+Background Task Execution (Phase A)
+- **Architecture**: Uses FastAPI BackgroundTasks for in-process async execution
+- **DB-backed**: All scenario and task state is persisted in SQLite
+- **Workflow**:
+  1. Create scenario via POST /scenarios (stored in DB with status "pending")
+  2. Enqueue execution via POST /scenarios/{id}/run (creates task record, returns task_id)
+  3. Background worker executes scenario and updates DB
+  4. Poll task status via GET /scenarios/tasks/{task_id}
+  5. Retrieve final result via GET /scenarios/{id}
+- **Future**: Will be migrated to Celery for distributed task execution while maintaining the same DB schema and API
 
 License
 - This project uses the license text included in the LICENSE file (permission + restrictions + disclaimer).
 
 Next Steps
-1. ~~Add database persistence for scenarios~~ ✅ Completed in this release
-2. Implement background task queue for async execution
-3. Add more scenario types and configuration options
-4. Expand API with scenario management endpoints
+1. ~~Add database persistence for scenarios~~ ✅ Completed
+2. ~~Implement background task queue for async execution~~ ✅ Phase A completed (FastAPI BackgroundTasks)
+3. Migrate to Celery for distributed task execution (Phase B)
+4. Add more scenario types and configuration options
+5. Implement database migrations with Alembic
