@@ -205,10 +205,10 @@ def clear_scenario_store():
     Clear all scenarios from the database.
     
     This is primarily used for test isolation to ensure a clean state
-    between test runs. Uses a bulk delete operation for efficiency.
+    between test runs. Deletes all scenario records from the database.
     """
     with get_session() as session:
-        # Use bulk delete for efficiency
+        # Delete all scenarios - fetches and deletes each record individually
         scenarios = session.exec(select(ScenarioModel)).all()
         for scenario in scenarios:
             session.delete(scenario)

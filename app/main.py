@@ -13,7 +13,6 @@ from app.db import init_db
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events."""
     # Skip DB init when running under tests; test fixtures call init_db() themselves
-    db_url = os.getenv("DATABASE_URL", "")
     running_tests = os.getenv("PYTEST_CURRENT_TEST") is not None
     if not running_tests:
         init_db()

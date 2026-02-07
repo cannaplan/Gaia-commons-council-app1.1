@@ -4,6 +4,9 @@ import os
 import tempfile
 import pytest
 
+from app import scenario
+
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_database():
     """Initialize the test database once for all tests."""
@@ -30,7 +33,7 @@ def setup_test_database():
         # Optionally, clean up environment variable
         os.environ.pop("DATABASE_URL", None)
 
-from app import scenario
+
 @pytest.fixture(autouse=True)
 def clear_scenarios():
     """Clear scenarios before and after each test."""

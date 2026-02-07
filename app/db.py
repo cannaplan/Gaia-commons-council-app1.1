@@ -2,7 +2,9 @@
 
 This module provides SQLite-backed storage for scenarios using SQLModel.
 By default, it uses a file-based database at ./data/gaia.db.
-For testing, set DATABASE_URL='sqlite:///:memory:' to use an in-memory database.
+For testing, you can override DATABASE_URL to use either an in-memory SQLite
+database (e.g., 'sqlite:///:memory:') or a temporary file-based SQLite database.
+The current test configuration (see tests/conftest.py) uses a temporary file.
 """
 
 import os
