@@ -80,7 +80,7 @@ API:
        "status": "pending",
        "config": {"param1": "value1"},
        "result": null,
-       "started_at": "2026-02-04T10:00:00Z",
+       "started_at": "2026-02-04T10:00:00+00:00",
        "finished_at": null
      }
      ```
