@@ -176,3 +176,36 @@ def test_scenario_without_config():
     scenario_json = scenario_response.json()
     assert scenario_json["status"] == "finished"
     assert scenario_json["result"]["input_config"] == {}
+
+
+def test_prevent_concurrent_runs():
+    """Test that running an already running/finished scenario is rejected."""
+    # Create a scenario
+    scenario_data = {"name": "concurrent-test-scenario"}
+    create_response = client.post("/scenarios", json=scenario_data)
+    assert create_response.status_code == 201
+    scenario_id = create_response.json()["id"]
+    
+    # First run should succeed
+    run_response1 = client.post(f"/scenarios/{scenario_id}/run")
+    assert run_response1.status_code == 202
+    task_id = run_response1.json()["task_id"]
+    
+    # Wait for completion
+    timeout_seconds = 5.0
+    poll_interval_seconds = 0.1
+    task_status = "pending"
+    start_time = time.monotonic()
+    
+    while (time.monotonic() - start_time) < timeout_seconds and task_status not in ["finished", "failed"]:
+        time.sleep(poll_interval_seconds)
+        task_response = client.get(f"/scenarios/tasks/{task_id}")
+        task_status = task_response.json()["status"]
+    
+    assert task_status == "finished"
+    
+    # Try to run again - should fail with 409
+    run_response2 = client.post(f"/scenarios/{scenario_id}/run")
+    assert run_response2.status_code == 409
+    assert "finished" in run_response2.json()["detail"].lower()
+    assert "cannot be run" in run_response2.json()["detail"].lower()

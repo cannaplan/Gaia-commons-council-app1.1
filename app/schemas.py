@@ -28,7 +28,8 @@ class ScenarioResponse(BaseModel):
     status: str = Field(..., description="Status of the scenario execution (e.g., 'pending', 'running', 'finished', 'failed')")
     config: Optional[dict] = Field(None, description="Configuration used for the scenario")
     result: Optional[ScenarioResult] = Field(None, description="Result payload of the scenario execution")
-    started_at: datetime = Field(..., description="Timestamp when the scenario started")
+    created_at: datetime = Field(..., description="Timestamp when the scenario was created")
+    started_at: Optional[datetime] = Field(None, description="Timestamp when the scenario execution started")
     finished_at: Optional[datetime] = Field(None, description="Timestamp when the scenario finished")
 
 

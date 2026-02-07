@@ -25,6 +25,10 @@ def init_db() -> None:
     This should be called at application startup or in tests after
     configuring the DATABASE_URL environment variable.
     """
+    # Import models to ensure they are registered with SQLModel metadata
+    from app.scenario import Scenario
+    from app.tasks import Task
+    
     SQLModel.metadata.create_all(engine)
 
 

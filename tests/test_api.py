@@ -39,11 +39,12 @@ def test_post_and_get_scenario():
     response_json = post_response.json()
     assert "id" in response_json
     assert response_json["name"] == "test-scenario"
-    assert response_json["status"] == "pending"  # Changed: now creates with pending status
-    assert response_json["config"] == {"param1": "value1", "param2": 42}  # Changed: config is now in response
-    assert response_json["result"] is None  # Changed: no result yet
-    assert "started_at" in response_json
-    assert response_json["finished_at"] is None  # Changed: not finished yet
+    assert response_json["status"] == "pending"
+    assert response_json["config"] == {"param1": "value1", "param2": 42}
+    assert response_json["result"] is None
+    assert "created_at" in response_json  # Created timestamp should be set
+    assert response_json["started_at"] is None  # Not started yet
+    assert response_json["finished_at"] is None
     
     # Assert Location header is set
     assert "Location" in post_response.headers

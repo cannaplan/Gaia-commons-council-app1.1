@@ -51,6 +51,9 @@ async def run_scenario_endpoint(
     in the background using FastAPI BackgroundTasks. The task ID can be used
     to poll for completion status via GET /scenarios/tasks/{task_id}.
     
+    Only scenarios with status "pending" or "failed" can be run. Running scenarios
+    are rejected to prevent concurrent execution races.
+    
     Args:
         scenario_id: The unique identifier of the scenario to run
         background_tasks: FastAPI BackgroundTasks for scheduling execution
@@ -60,13 +63,21 @@ async def run_scenario_endpoint(
         
     Raises:
         HTTPException: 404 if the scenario is not found
+        HTTPException: 409 if the scenario is already running or finished
     """
-    # Verify scenario exists
+    # Verify scenario exists and check status
     scenario = get_scenario(scenario_id)
     if scenario is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Scenario with id '{scenario_id}' not found"
+        )
+    
+    # Only allow running if status is pending or failed
+    if scenario["status"] not in ["pending", "failed"]:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Scenario with status '{scenario['status']}' cannot be run. Only 'pending' or 'failed' scenarios can be executed."
         )
     
     # Create a task record

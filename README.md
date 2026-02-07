@@ -80,7 +80,8 @@ API:
        "status": "pending",
        "config": {"param1": "value1"},
        "result": null,
-       "started_at": "2026-02-04T10:00:00+00:00",
+       "created_at": "2026-02-04T10:00:00+00:00",
+       "started_at": null,
        "finished_at": null
      }
      ```
@@ -92,7 +93,7 @@ API:
      Response (202 Accepted):
      ```json
      {
-       "task_id": "abc12345-6789-0def-ghij-klmnopqrstuv",
+       "task_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
        "scenario_id": "550e8400-e29b-41d4-a716-446655440000",
        "status": "pending"
      }
@@ -100,18 +101,18 @@ API:
   
   3. Poll task status (GET /scenarios/tasks/{task_id})
      ```bash
-     curl http://127.0.0.1:8000/scenarios/tasks/abc12345-6789-0def-ghij-klmnopqrstuv
+     curl http://127.0.0.1:8000/scenarios/tasks/7c9e6679-7425-40de-944b-e07fc1f90ae7
      ```
      Response (200 OK):
      ```json
      {
-       "task_id": "abc12345-6789-0def-ghij-klmnopqrstuv",
+       "task_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
        "scenario_id": "550e8400-e29b-41d4-a716-446655440000",
        "status": "finished",
        "error": null,
-       "created_at": "2026-02-04T10:00:01Z",
-       "started_at": "2026-02-04T10:00:02Z",
-       "finished_at": "2026-02-04T10:00:03Z"
+       "created_at": "2026-02-04T10:00:01+00:00",
+       "started_at": "2026-02-04T10:00:02+00:00",
+       "finished_at": "2026-02-04T10:00:03+00:00"
      }
      ```
   
@@ -130,8 +131,9 @@ API:
          "summary": "demo result",
          "input_config": {"param1": "value1"}
        },
-       "started_at": "2026-02-04T10:00:00Z",
-       "finished_at": "2026-02-04T10:00:03Z"
+       "created_at": "2026-02-04T10:00:00+00:00",
+       "started_at": "2026-02-04T10:00:02+00:00",
+       "finished_at": "2026-02-04T10:00:03+00:00"
      }
      ```
 

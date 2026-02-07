@@ -20,7 +20,8 @@ class Scenario(SQLModel, table=True):
     status: str
     config: Optional[dict] = Field(default=None, sa_column=Column(JSON))
     result: Optional[dict] = Field(default=None, sa_column=Column(JSON))
-    started_at: str
+    created_at: str
+    started_at: Optional[str] = None
     finished_at: Optional[str] = None
 
 def clear_scenario_store():
@@ -98,7 +99,7 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
         
     Returns:
         A dictionary containing the scenario record with id, name, status,
-        result, started_at, and finished_at fields
+        result, created_at, started_at, and finished_at fields
     """
     # Run the scenario (synchronous execution)
     record = run_scenario(name=name, config=config)
@@ -110,6 +111,7 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
         status=record["status"],
         config=config,
         result=record["result"],
+        created_at=record["started_at"],  # For sync execution, created and started are the same
         started_at=record["started_at"],
         finished_at=record["finished_at"]
     )
@@ -146,6 +148,7 @@ def get_scenario(scenario_id: str) -> Optional[dict]:
             "status": scenario.status,
             "config": scenario.config,
             "result": scenario.result,
+            "created_at": scenario.created_at,
             "started_at": scenario.started_at,
             "finished_at": scenario.finished_at
         }
@@ -166,17 +169,17 @@ def create_scenario(name: str, config: Optional[dict] = None) -> dict:
         
     Returns:
         A dictionary containing the scenario record with id, name, status,
-        config, and started_at fields
+        config, created_at, and other fields
     """
     scenario_id = str(uuid4())
-    started_at = datetime.now(timezone.utc).isoformat()
+    created_at = datetime.now(timezone.utc).isoformat()
     
     scenario = Scenario(
         id=scenario_id,
         name=name,
         status="pending",
         config=config,
-        started_at=started_at
+        created_at=created_at
     )
     
     with Session(engine) as session:
@@ -190,8 +193,10 @@ def create_scenario(name: str, config: Optional[dict] = None) -> dict:
         "status": scenario.status,
         "config": scenario.config,
         "result": scenario.result,
+        "created_at": scenario.created_at,
         "started_at": scenario.started_at,
         "finished_at": scenario.finished_at
     }
+
 
 
