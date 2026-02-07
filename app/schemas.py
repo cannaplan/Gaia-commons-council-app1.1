@@ -17,7 +17,7 @@ class ScenarioResult(BaseModel):
     """Result data from scenario execution."""
     
     summary: str
-    input_config: Optional[dict] = None
+    input_config: dict = Field(default_factory=dict)
 
 
 class ScenarioResponse(BaseModel):
