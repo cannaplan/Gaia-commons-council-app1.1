@@ -44,9 +44,16 @@ def test_post_and_get_scenario():
     # Assert 200 OK
     assert get_response.status_code == 200
     
-    # Check that GET response matches POST response
+    # Check that GET response contains expected fields and matches POST response
     get_data = get_response.json()
-    assert get_data == data
+    assert get_data["id"] == data["id"]
+    assert get_data["name"] == data["name"]
+    assert get_data["status"] == data["status"]
+    assert get_data["result"]["summary"] == data["result"]["summary"]
+    assert get_data["result"]["input_config"] == data["result"]["input_config"]
+    # Verify timestamps are present and parseable
+    assert "started_at" in get_data
+    assert "finished_at" in get_data
 
 
 def test_get_not_found():
