@@ -11,6 +11,7 @@ Gaia Commons Council is a planetary transformation framework bridging climate mo
 - **Backend**: Python 3.11+ with FastAPI
 - **API Framework**: FastAPI (with Uvicorn server)
 - **CLI**: Click framework
+- **Database**: SQLite with SQLModel (ORM)
 - **Schema Validation**: Pydantic v2.0+
 - **Testing**: pytest with pytest-cov
 - **Configuration**: YAML/JSON support via PyYAML
@@ -21,10 +22,12 @@ Gaia Commons Council is a planetary transformation framework bridging climate mo
   - `main.py` — FastAPI application entry point
   - `api.py` — API route definitions
   - `cli.py` — Click-based CLI implementation
+  - `db.py` — Database module (SQLite with SQLModel)
   - `scenario.py` — Scenario execution logic
   - `schemas.py` — Pydantic models for validation
 - `tests/` — Test suite using pytest
 - `.github/workflows/` — CI/CD workflows
+- `data/` — SQLite database storage (git-ignored)
 
 ## Development Commands
 
@@ -100,6 +103,7 @@ pytest -q
   - Test classes: `Test*`
 - Use **pytest fixtures** for common setup/teardown
 - Use **httpx** for API endpoint testing
+- Tests use **temporary file-based SQLite databases** (not in-memory) for better isolation
 - Aim for good test coverage on new features
 
 ### Dependencies
@@ -121,6 +125,16 @@ pytest -q
 ### Configuration
 - Support both JSON and YAML configuration files
 - Use environment variables for sensitive data (not committed to repo)
+- The `DATABASE_URL` environment variable controls database location (defaults to `sqlite:///./data/gaia.db`)
+
+### Database and Persistence
+- Use **SQLModel** for database models (combines SQLAlchemy and Pydantic)
+- All scenario data is persisted to SQLite by default
+- Database engine is created in `app/db.py` with thread-safe settings
+- Use `init_db()` to create tables at application startup
+- Use `get_session()` for database session management
+- In production, set `DATABASE_URL` to use PostgreSQL or other databases
+- The `data/` directory is git-ignored and contains the SQLite database file
 
 ## CI/CD
 
@@ -144,9 +158,10 @@ The repository uses GitHub Actions for continuous integration:
 ## Future Roadmap (Context)
 
 Planned features include:
-1. Database persistence for scenarios (SQLite/PostgreSQL)
-2. Background task queue for async execution
-3. Additional scenario types and configuration options
-4. Enhanced scenario management endpoints
+1. ~~Database persistence for scenarios~~ ✅ **Completed** (SQLite with SQLModel)
+2. Database migrations with Alembic
+3. Background task queue for async execution
+4. Additional scenario types and configuration options
+5. Enhanced scenario management endpoints
 
 When implementing these features, maintain the existing architectural patterns.
