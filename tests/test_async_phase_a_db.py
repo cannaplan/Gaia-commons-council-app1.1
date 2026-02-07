@@ -72,18 +72,18 @@ def test_async_scenario_creation_and_execution():
     assert run_json["status"] == "pending"
     
     # Step 3: Poll task status until finished (with timeout)
-    max_attempts = 20  # 10 seconds max
-    attempt = 0
+    timeout_seconds = 5.0
+    poll_interval_seconds = 0.1
     task_status = "pending"
+    start_time = time.monotonic()
     
-    while attempt < max_attempts and task_status not in ["finished", "failed"]:
-        time.sleep(0.5)  # Wait 500ms between polls
+    while (time.monotonic() - start_time) < timeout_seconds and task_status not in ["finished", "failed"]:
+        time.sleep(poll_interval_seconds)
         task_response = client.get(f"/scenarios/tasks/{task_id}")
         assert task_response.status_code == 200
         
         task_json = task_response.json()
         task_status = task_json["status"]
-        attempt += 1
     
     # Assert task finished successfully
     assert task_status == "finished", f"Task did not finish in time. Status: {task_status}"
