@@ -51,9 +51,16 @@ def test_post_and_get_scenario():
     assert get_data["status"] == data["status"]
     assert get_data["result"]["summary"] == data["result"]["summary"]
     assert get_data["result"]["input_config"] == data["result"]["input_config"]
-    # Verify timestamps are present and parseable
+    # Verify timestamps are present, parseable as ISO-8601, and logically ordered
+    from datetime import datetime
     assert "started_at" in get_data
     assert "finished_at" in get_data
+    started_at = datetime.fromisoformat(get_data["started_at"])
+    finished_at = datetime.fromisoformat(get_data["finished_at"])
+    assert finished_at >= started_at, "finished_at should be >= started_at"
+    # Verify timestamps are timezone-aware
+    assert started_at.tzinfo is not None, "started_at should be timezone-aware"
+    assert finished_at.tzinfo is not None, "finished_at should be timezone-aware"
 
 
 def test_get_not_found():

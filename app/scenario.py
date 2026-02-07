@@ -94,6 +94,9 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
     record = run_scenario(name=name, config=config)
     
     # Store in the in-memory registry (TODO: replace with DB in PR #3)
+    # NOTE: This in-memory store will grow without bound in long-running processes.
+    # This is acceptable for the temporary implementation as it will be replaced
+    # with persistent storage. For production use, see PR #3 for database persistence.
     # Use lock to prevent race conditions under concurrent requests
     with _STORE_LOCK:
         _SCENARIO_STORE[record["id"]] = record
