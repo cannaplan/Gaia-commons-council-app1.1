@@ -1,4 +1,4 @@
-"""FastAPI application with health endpoint."""
+"""FastAPI application with health endpoint and scenario management API."""
 
 from fastapi import FastAPI
 

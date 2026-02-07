@@ -10,7 +10,6 @@ client = TestClient(app)
 
 def test_post_and_get_scenario():
     """Test creating a scenario via POST and retrieving it via GET."""
-    """Test creating a scenario via POST and retrieving it via GET."""
     # Create a scenario via POST
     scenario_data = {
         "name": "test-scenario",
