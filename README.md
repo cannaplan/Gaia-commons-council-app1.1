@@ -64,7 +64,12 @@ API:
   ```
   Response: `{"status": "ok"}`
 
-- Create and run a scenario (POST /scenarios)
+- **Phase A: Async Scenario Execution with DB-backed BackgroundTasks**
+  
+  The API now supports asynchronous scenario execution using FastAPI BackgroundTasks
+  with database persistence. This enables non-blocking scenario runs with status polling.
+
+- Create a scenario (POST /scenarios)
   ```bash
   curl -X POST http://127.0.0.1:8000/scenarios \
     -H "Content-Type: application/json" \
@@ -75,13 +80,41 @@ API:
   {
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "name": "my-scenario",
-    "status": "finished",
+    "status": "pending",
+    "config": {"param1": "value1"},
     "started_at": "2026-01-29T05:00:00Z",
-    "finished_at": "2026-01-29T05:00:01Z",
-    "result": {
-      "summary": "demo result",
-      "input_config": {"param1": "value1"}
-    }
+    "finished_at": null,
+    "result": null
+  }
+  ```
+
+- Run a scenario asynchronously (POST /scenarios/{id}/run)
+  ```bash
+  curl -X POST http://127.0.0.1:8000/scenarios/550e8400-e29b-41d4-a716-446655440000/run
+  ```
+  Response (202 Accepted):
+  ```json
+  {
+    "task_id": "abc123-task-id",
+    "scenario_id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "pending"
+  }
+  ```
+
+- Check task status (GET /scenarios/tasks/{task_id})
+  ```bash
+  curl http://127.0.0.1:8000/scenarios/tasks/abc123-task-id
+  ```
+  Response (200 OK):
+  ```json
+  {
+    "task_id": "abc123-task-id",
+    "scenario_id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "finished",
+    "error": null,
+    "created_at": "2026-01-29T05:00:00Z",
+    "started_at": "2026-01-29T05:00:01Z",
+    "finished_at": "2026-01-29T05:00:02Z"
   }
   ```
 
@@ -89,7 +122,21 @@ API:
   ```bash
   curl http://127.0.0.1:8000/scenarios/550e8400-e29b-41d4-a716-446655440000
   ```
-  Response (200 OK): Same as POST response
+  Response (200 OK):
+  ```json
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "my-scenario",
+    "status": "finished",
+    "config": {"param1": "value1"},
+    "started_at": "2026-01-29T05:00:01Z",
+    "finished_at": "2026-01-29T05:00:02Z",
+    "result": {
+      "summary": "demo result",
+      "input_config": {"param1": "value1"}
+    }
+  }
+  ```
 
 - OpenAPI Documentation (Swagger UI)
   Visit http://127.0.0.1:8000/docs in your browser to explore the interactive API documentation
@@ -127,7 +174,7 @@ Development
 - Use `pytest --cov=app` to see code coverage
 
 Database & Persistence
-- **Default**: The application uses a file-based SQLite database at `./data/gaia.db` for persisting scenario records
+- **Default**: The application uses a file-based SQLite database at `./data/gaia.db` for persisting scenario and task records
 - **File location**: The database file is created automatically in the `data/` directory (which is git-ignored)
 - **In tests**: Tests use a temporary file-based SQLite database (created and cleaned up automatically)
 - **Custom database**: Set the `DATABASE_URL` environment variable to use a different database:
@@ -136,14 +183,28 @@ Database & Persistence
   # Or for PostgreSQL (requires psycopg2):
   # export DATABASE_URL="postgresql://user:password@localhost/dbname"
   ```
+- **Database initialization**: The database tables are created automatically on application startup via the `init_db()` function in the lifespan context manager
 - **Migrations**: Database migrations with Alembic are planned for a future release (TODO)
-- **Models**: Scenarios are stored with id, name, status, result (JSON), started_at, and finished_at fields
+- **Models**: 
+  - **Scenario**: Stores scenario records with id, name, status, config (JSON), result (JSON), started_at, and finished_at fields
+  - **Task**: Tracks background task execution with task_id, scenario_id, status, error, created_at, started_at, and finished_at fields
+
+Phase A: Async Execution with BackgroundTasks
+- **Implementation**: This release implements Phase A of async scenario execution using FastAPI BackgroundTasks
+- **Database-backed**: All task and scenario state is persisted to the database for durability and status polling
+- **Workflow**: 
+  1. Create a scenario with POST /scenarios (stores config, returns scenario_id)
+  2. Enqueue execution with POST /scenarios/{id}/run (returns task_id)
+  3. Poll task status with GET /scenarios/tasks/{task_id}
+  4. Retrieve final result with GET /scenarios/{id}
+- **Future**: In a future release (Phase B), BackgroundTasks will be replaced with Celery/Redis for production-scale async execution. The API endpoints will remain the same, only the task enqueueing mechanism will change.
 
 License
 - This project uses the license text included in the LICENSE file (permission + restrictions + disclaimer).
 
 Next Steps
-1. ~~Add database persistence for scenarios~~ ✅ Completed in this release
-2. Implement background task queue for async execution
+1. ~~Add database persistence for scenarios~~ ✅ Completed
+2. ~~Implement background task queue for async execution~~ ✅ Phase A completed (BackgroundTasks with DB persistence)
 3. Add more scenario types and configuration options
 4. Expand API with scenario management endpoints
+5. Phase B: Replace BackgroundTasks with Celery/Redis for production-scale async execution

@@ -18,8 +18,13 @@ class Scenario(SQLModel, table=True):
     id: str = Field(primary_key=True)
     name: str
     status: str
+    config: Optional[dict] = Field(
+        default=None, 
+        sa_column=Column(JSON),
+        description="Configuration dictionary for the scenario execution"
+    )
     result: Optional[dict] = Field(default=None, sa_column=Column(JSON))
-    started_at: str
+    started_at: Optional[str] = None
     finished_at: Optional[str] = None
 
 def clear_scenario_store():
@@ -107,6 +112,7 @@ def create_and_run_scenario(name: str, config: Optional[dict] = None) -> dict:
         id=record["id"],
         name=record["name"],
         status=record["status"],
+        config=config,
         result=record["result"],
         started_at=record["started_at"],
         finished_at=record["finished_at"]
@@ -142,6 +148,7 @@ def get_scenario(scenario_id: str) -> Optional[dict]:
             "id": scenario.id,
             "name": scenario.name,
             "status": scenario.status,
+            "config": scenario.config,
             "result": scenario.result,
             "started_at": scenario.started_at,
             "finished_at": scenario.finished_at
