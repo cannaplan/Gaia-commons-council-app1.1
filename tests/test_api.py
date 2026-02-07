@@ -29,7 +29,7 @@ def test_post_and_get_scenario():
         "config": {"param1": "value1", "param2": 42}
     }
     
-    # POST the scenario
+    # POST the scenario (creates but does not execute)
     post_response = client.post("/scenarios", json=scenario_data)
     
     # Assert 201 Created status
@@ -39,12 +39,11 @@ def test_post_and_get_scenario():
     response_json = post_response.json()
     assert "id" in response_json
     assert response_json["name"] == "test-scenario"
-    assert response_json["status"] == "finished"
-    assert "result" in response_json
-    assert response_json["result"]["summary"] == "demo result"
-    assert response_json["result"]["input_config"] == {"param1": "value1", "param2": 42}
+    assert response_json["status"] == "pending"  # Changed: now creates with pending status
+    assert response_json["config"] == {"param1": "value1", "param2": 42}  # Changed: config is now in response
+    assert response_json["result"] is None  # Changed: no result yet
     assert "started_at" in response_json
-    assert "finished_at" in response_json
+    assert response_json["finished_at"] is None  # Changed: not finished yet
     
     # Assert Location header is set
     assert "Location" in post_response.headers
@@ -87,7 +86,7 @@ def test_post_scenario_without_config():
         "name": "simple-scenario"
     }
     
-    # POST the scenario
+    # POST the scenario (creates but does not execute)
     response = client.post("/scenarios", json=scenario_data)
     
     # Assert 201 Created status
@@ -96,4 +95,6 @@ def test_post_scenario_without_config():
     # Assert response contains expected fields
     response_json = response.json()
     assert response_json["name"] == "simple-scenario"
-    assert response_json["result"]["input_config"] == {}
+    assert response_json["status"] == "pending"  # Changed: now creates with pending status
+    assert response_json["config"] is None  # Changed: config is None
+    assert response_json["result"] is None  # Changed: no result yet
