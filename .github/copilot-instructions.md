@@ -157,11 +157,13 @@ The repository uses GitHub Actions for continuous integration:
 
 ## Future Roadmap (Context)
 
-Planned features include:
-1. ~~Database persistence for scenarios~~ ✅ **Completed** (SQLite with SQLModel)
-2. Database migrations with Alembic
-3. Background task queue for async execution
-4. Additional scenario types and configuration options
-5. Enhanced scenario management endpoints
+### Completed Features
+- **Database persistence for scenarios** (SQLite with SQLModel)
+
+### Planned Features
+1. Database migrations with Alembic
+2. Background task queue for async execution
+3. Additional scenario types and configuration options
+4. Enhanced scenario management endpoints
 
 When implementing these features, maintain the existing architectural patterns.
